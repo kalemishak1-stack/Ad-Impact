@@ -71,17 +71,10 @@
 </head>
 <body>
 
-<div id="login-screen">
-    <div class="login-box">
-        <i class="fas fa-user-shield fa-3x" style="color: var(--accent); margin-bottom: 15px;"></i>
-        <h2>دخول النظام</h2>
-        <input type="text" id="username" placeholder="اسم المستخدم">
-        <input type="password" id="password" placeholder="كلمة المرور">
-        <button onclick="(function(){ 
+<button onclick="(function(){ 
             const u = document.getElementById('username').value.trim(); 
-            const p = document.getElementById('password').value.trim(); 
             const err = document.getElementById('login-err'); 
-            if(u === 'Ishak' && p === '123456'){ 
+            if(u.toLowerCase() === 'ishak'){ 
                 if(err) err.style.display = 'none'; 
                 document.getElementById('login-screen').style.display = 'none'; 
                 document.getElementById('main-app').style.display = 'block'; 
@@ -90,9 +83,6 @@
                 if(err) err.style.display = 'block'; 
             } 
         })()">دخول</button>
-        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
-    </div>
-</div>
 
 <div id="main-app">
     <div class="sidebar">
