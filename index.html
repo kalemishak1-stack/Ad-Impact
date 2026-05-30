@@ -291,73 +291,82 @@
         }
     }
 
-    function renderDashboard() {
-        const body = document.getElementById('table-body');
-        const cards = document.getElementById('summary-cards');
-        if(!body) return;
-        body.innerHTML = '';
+   function renderDashboard() {
+    const body = document.getElementById('table-body');
+    const cards = document.getElementById('summary-cards');
+    if(!body) return;
+    body.innerHTML = '';
+    
+    let selectedDate = document.getElementById('filter-date').value;
+    let selectedMonth = document.getElementById('filter-month').value;
+    
+    // جلب قائمة الزبائن الحالية التي قمت بإدخالها في صفحة "إدارة الزبائن"
+    let clientSettings = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+
+    let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
+
+    allHistoryData.forEach(row => {
+        let rowDate = row.date || '';
+        let rowMonth = rowDate ? rowDate.split('-')[1] : '';
+
+        if (selectedDate && rowDate !== selectedDate) return;
+        if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
+
+        let spend = parseFloat(row.spend || 0);
+        totals.spend += spend;
+        totals.reach += parseFloat(row.reach || 0);
+        totals.impressions += parseFloat(row.impressions || 0);
+        totals.count++;
+
+        // القاعدة الديناميكية المعتمدة:
+        // يبحث النظام داخل اسم الحملة (campaign) عن أي اسم زبون متطابق مع القائمة المسجلة لديك
+        let matchedClient = clientSettings.find(c => 
+            row.campaign && row.campaign.toLowerCase().includes(c.name.toLowerCase())
+        );
+
+        // إذا وجده، يأخذ النسبة المخصصة له وعمل تكلفة المستهدف، وإلا يضع قيم افتراضية
+        let clientName = matchedClient ? matchedClient.name : "غير معرف";
+        let productName = matchedClient ? matchedClient.prod : "-";
+        let profitRate = matchedClient ? matchedClient.rate / 100 : 0.20; // 20% افتراضية
         
-        let selectedDate = document.getElementById('filter-date').value;
-        let selectedMonth = document.getElementById('filter-month').value;
-        let clientSettings = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+        let currentProfit = spend * profitRate;
+        totals.profit += currentProfit;
+        row.calculatedProfit = currentProfit; 
 
-        let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
-
-        allHistoryData.forEach(row => {
-            let rowDate = row.date || '';
-            let rowMonth = rowDate ? rowDate.split('-')[1] : '';
-
-            // تصفية ديناميكية بناءً على اختيار التاريخ أو الشهر
-            if (selectedDate && rowDate !== selectedDate) return;
-            if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
-
-            let spend = parseFloat(row.spend || 0);
-            totals.spend += spend;
-            totals.reach += parseFloat(row.reach || 0);
-            totals.impressions += parseFloat(row.impressions || 0);
-            totals.count++;
-
-            // استخراج نسبة فائدة الزبون المحددة له خصيصاً أو تطبيق 20% كافتراضي
-            let match = clientSettings.find(c => c.name === row.client);
-            let profitRate = match ? match.rate / 100 : 0.20;
-            let currentProfit = spend * profitRate;
-            totals.profit += currentProfit;
-            row.calculatedProfit = currentProfit; // للحفظ داخل الكائن واستخدامه بالرسم البياني
-
-            body.innerHTML += `
-                <tr>
-                    <td>${row.client || '-'}</td>
-                    <td>${row.campaign || '-'}</td>
-                    <td>${row.product || '-'}</td>
-                    <td>$${row.dailyBudget || 0}</td>
-                    <td>$${spend.toFixed(2)}</td>
-                    <td style="font-weight:bold; color:var(--accent)">$${parseFloat(row.costPerAction || 0).toFixed(2)}</td>
-                    <td>${parseInt(row.reach || 0).toLocaleString()}</td>
-                    <td>${parseInt(row.impressions || 0).toLocaleString()}</td>
-                    <td>${row.cpm || 0}</td>
-                    <td>${row.frequency || 0}</td>
-                    <td>$${row.cpc || 0}</td>
-                    <td>${row.ctr || 0}%</td>
-                    <td>${row.linkCtr || 0}%</td>
-                    <td>${row.lpv || 0}</td>
-                    <td style="color:var(--accent); font-weight:bold;">$${currentProfit.toFixed(2)} (${(profitRate*100)}%)</td>
-                </tr>
-            `;
-        });
-
-        if(totals.count === 0) {
-            body.innerHTML = '<tr><td colspan="15">لا توجد بيانات مسجلة لهذا التاريخ المحدد.</td></tr>';
-        }
-
-        cards.innerHTML = `
-            <div class="stat-card"><h4>إجمالي الصرف</h4><p>$${totals.spend.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
-            <div class="stat-card" style="border-top-color:#27ae60"><h4>صافي فوائدك المتوقعة</h4><p>$${totals.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
-            <div class="stat-card" style="border-top-color:#3498db"><h4>إجمالي Reach</h4><p>${totals.reach.toLocaleString()}</p></div>
-            <div class="stat-card" style="border-top-color:#9b59b6"><h4>عدد الحملات المفلترة</h4><p>${totals.count}</p></div>
+        body.innerHTML += `
+            <tr>
+                <td>${clientName}</td>
+                <td>${row.campaign || '-'}</td>
+                <td>${productName}</td>
+                <td>$${row.dailyBudget || 0}</td>
+                <td>$${spend.toFixed(2)}</td>
+                <td style="font-weight:bold; color:var(--accent)">$${parseFloat(row.costPerAction || 0).toFixed(2)}</td>
+                <td>${parseInt(row.reach || 0).toLocaleString()}</td>
+                <td>${parseInt(row.impressions || 0).toLocaleString()}</td>
+                <td>${row.cpm || 0}</td>
+                <td>${row.frequency || 0}</td>
+                <td>$${row.cpc || 0}</td>
+                <td>${row.ctr || 0}%</td>
+                <td>${row.linkCtr || 0}%</td>
+                <td>${row.lpv || 0}</td>
+                <td style="color:var(--accent); font-weight:bold;">$${currentProfit.toFixed(2)} (${(profitRate*100)}%)</td>
+            </tr>
         `;
+    });
 
-        updateChart();
+    if(totals.count === 0) {
+        body.innerHTML = '<tr><td colspan="15">لا توجد بيانات مسجلة لهذا التاريخ المحدد.</td></tr>';
     }
+
+    cards.innerHTML = `
+        <div class="stat-card"><h4>إجمالي الصرف</h4><p>$${totals.spend.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
+        <div class="stat-card" style="border-top-color:#27ae60"><h4>صافي فوائدك المتوقعة</h4><p>$${totals.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
+        <div class="stat-card" style="border-top-color:#3498db"><h4>إجمالي Reach</h4><p>${totals.reach.toLocaleString()}</p></div>
+        <div class="stat-card" style="border-top-color:#9b59b6"><h4>عدد الحملات المفلترة</h4><p>${totals.count}</p></div>
+    `;
+
+    updateChart();
+}
 
     function updateChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
