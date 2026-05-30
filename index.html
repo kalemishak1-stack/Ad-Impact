@@ -300,15 +300,25 @@
     let selectedDate = document.getElementById('filter-date').value;
     let selectedMonth = document.getElementById('filter-month').value;
     
-    // جلب قائمة الزبائن الحالية التي قمت بإدخالها في صفحة "إدارة الزبائن"
+    // جلب قائمة الزبائن المسجلة في صفحة "إدارة الزبائن"
     let clientSettings = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
 
     let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
+    let todayStr = new Date().toISOString().split('T')[0];
 
-    allHistoryData.forEach(row => {
-       // إذا كان التاريخ غير موجود في الشيت، يضع تاريخ اليوم تلقائياً لكي لا تختفي الحملة
-let todayStr = new Date().toISOString().split('T')[0];
-let rowDate = row.date ? row.date.split('T')[0] : todayStr;
+    // فلترة البيانات الصالحة فقط والتي تحتوي على اسم حملة فعلي من الشيت
+    let validRows = allHistoryData.filter(row => row && row.campaign && row.campaign !== '-');
+
+    if (validRows.length === 0) {
+        body.innerHTML = '<tr><td colspan="15">لم يتم جلب بيانات بعد. يرجى التأكد من إضافة الرابط والضغط على "تحديث يدوي".</td></tr>';
+        return;
+    }
+
+    validRows.forEach(row => {
+        // إذا لم توفر أداة الربط تاريخاً، نعتمد تاريخ اليوم تلقائياً منعاً للاختفاء
+        let rowDate = row.date ? row.date.split('T')[0] : todayStr;
+        let rowMonth = rowDate ? rowDate.split('-')[1] : '';
+
         if (selectedDate && rowDate !== selectedDate) return;
         if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
 
@@ -318,16 +328,16 @@ let rowDate = row.date ? row.date.split('T')[0] : todayStr;
         totals.impressions += parseFloat(row.impressions || 0);
         totals.count++;
 
-        // القاعدة الديناميكية المعتمدة:
-        // يبحث النظام داخل اسم الحملة (campaign) عن أي اسم زبون متطابق مع القائمة المسجلة لديك
+        // المطابقة الذكية: البحث عن اسم الزبون بغض النظر عن حالة الأحرف (كبيرة أو صغيرة)
         let matchedClient = clientSettings.find(c => 
-            row.campaign && row.campaign.toLowerCase().includes(c.name.toLowerCase())
+            c.name && row.campaign.toLowerCase().includes(c.name.toLowerCase())
         );
 
-        // إذا وجده، يأخذ النسبة المخصصة له وعمل تكلفة المستهدف، وإلا يضع قيم افتراضية
         let clientName = matchedClient ? matchedClient.name : "غير معرف";
         let productName = matchedClient ? matchedClient.prod : "-";
-        let profitRate = matchedClient ? matchedClient.rate / 100 : 0.20; // 20% افتراضية
+        
+        // جلب نسبة فائدة الزبون، أو اعتماد 25% كقيمة افتراضية كما أعددتها لـ Ayoub
+        let profitRate = matchedClient ? parseFloat(matchedClient.rate) / 100 : 0.25; 
         
         let currentProfit = spend * profitRate;
         totals.profit += currentProfit;
@@ -336,26 +346,26 @@ let rowDate = row.date ? row.date.split('T')[0] : todayStr;
         body.innerHTML += `
             <tr>
                 <td>${clientName}</td>
-                <td>${row.campaign || '-'}</td>
+                <td style="text-align:right;">${row.campaign}</td>
                 <td>${productName}</td>
-                <td>$${row.dailyBudget || 0}</td>
+                <td>$${parseFloat(row.dailyBudget || 0).toFixed(2)}</td>
                 <td>$${spend.toFixed(2)}</td>
                 <td style="font-weight:bold; color:var(--accent)">$${parseFloat(row.costPerAction || 0).toFixed(2)}</td>
                 <td>${parseInt(row.reach || 0).toLocaleString()}</td>
                 <td>${parseInt(row.impressions || 0).toLocaleString()}</td>
-                <td>${row.cpm || 0}</td>
-                <td>${row.frequency || 0}</td>
-                <td>$${row.cpc || 0}</td>
-                <td>${row.ctr || 0}%</td>
-                <td>${row.linkCtr || 0}%</td>
-                <td>${row.lpv || 0}</td>
+                <td>${parseFloat(row.cpm || 0).toFixed(2)}</td>
+                <td>${parseFloat(row.frequency || 1).toFixed(2)}</td>
+                <td>$${parseFloat(row.cpc || 0).toFixed(2)}</td>
+                <td>${parseFloat(row.ctr || 0).toFixed(2)}%</td>
+                <td>${parseFloat(row.linkCtr || 0).toFixed(2)}%</td>
+                <td>${parseInt(row.lpv || 0).toLocaleString()}</td>
                 <td style="color:var(--accent); font-weight:bold;">$${currentProfit.toFixed(2)} (${(profitRate*100)}%)</td>
             </tr>
         `;
     });
 
     if(totals.count === 0) {
-        body.innerHTML = '<tr><td colspan="15">لا توجد بيانات مسجلة لهذا التاريخ المحدد.</td></tr>';
+        body.innerHTML = '<tr><td colspan="15">لا توجد حملات مسجلة تطابق التاريخ المختار.</td></tr>';
     }
 
     cards.innerHTML = `
@@ -367,7 +377,6 @@ let rowDate = row.date ? row.date.split('T')[0] : todayStr;
 
     updateChart();
 }
-
     function updateChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         const selectedKPIs = Array.from(document.querySelectorAll('#kpi-selectors input:checked')).map(i => i.value);
