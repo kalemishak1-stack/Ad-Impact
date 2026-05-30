@@ -77,7 +77,7 @@
         <h2>دخول النظام</h2>
         <input type="text" id="username" placeholder="اسم المستخدم">
         <input type="password" id="password" placeholder="كلمة المرور">
-        <button onclick="login()">دخول</button>
+      <button onclick="checkLogin()">دخول</button>
         <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
     </div>
 </div>
@@ -219,17 +219,25 @@
     // افتراض تاريخ اليوم تلقائياً عند فتح اللوحة
     document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
 
-    function login() {
-        const u = document.getElementById('username').value;
-        const p = document.getElementById('password').value;
-        if(u === 'Ishak' && p === 'Ishakiyad1@') {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            loadData(); // تحميل وجلب تلقائي فوري عند الدخول دون تدخل منك
-        } else {
-            document.getElementById('login-err').style.display = 'block';
-        }
+   function checkLogin() {
+    const userInp = document.getElementById('username').value.trim();
+    const passInp = document.getElementById('password').value.trim();
+    const loginErr = document.getElementById('login-err');
+
+    // التحقق من البيانات (اسم المستخدم وكلمة المرور الخاصة بك)
+    if (userInp === 'Ishak' && passInp === '123456') { 
+        if(loginErr) loginErr.style.display = 'none';
+        
+        // إخفاء شاشة تسجيل الدخول وإظهار التطبيق بالكامل بناءً على الـ IDs في ملفك
+        if(document.getElementById('login-screen')) document.getElementById('login-screen').style.display = 'none';
+        if(document.getElementById('main-app')) document.getElementById('main-app').style.display = 'block';
+        
+        // جلب البيانات فوراً وتحديث اللوحة بعد الدخول
+        loadData();
+    } else {
+        if(loginErr) loginErr.style.display = 'block'; // إظهار رسالة "بيانات الدخول خاطئة" الظاهرة بالسطر 81
     }
+}
 
     function logout() { location.reload(); }
 
