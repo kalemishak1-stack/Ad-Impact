@@ -106,16 +106,21 @@
                     <option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option>
                     <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
                 </select>
-                <button id="auto-sync-btn" onclick="toggleAutoSync()" style="margin-right: 10px; padding: 8px 15px; background: var(--secondary); color:white; border:none; border-radius:5px; cursor:pointer;">🔄 الوضع الآلي: متوقف</button>
+             <label style="margin-right: 15px;">الوضع الآلي:</label>
+                <select id="auto-sync-select" onchange="handleAutoSyncChange()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 130px; vertical-align: middle;">
+                    <option value="off" selected>❌ متوقف</option>
+                    <option value="5">⚡ نشط (كل 5 دقائق)</option>
+                    <option value="10">⚡ نشط (كل 10 دقائق)</option>
+                </select>
 
-                <label style="margin-right: 15px;">الزبائن:</label>
-                <select id="filter-clients" onchange="renderDashboard()" multiple style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 120px; vertical-align: middle;">
+                <label style="margin-right: 15px;">الزبون:</label>
+                <select id="filter-clients" onchange="renderDashboard()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 140px; vertical-align: middle;">
                     <option value="all" selected>كل الزبائن</option>
                     <option value="غير معرف">غير معرف</option>
                 </select>
 
                 <label style="margin-right: 15px;">المنصة:</label>
-                <select id="filter-platforms" onchange="renderDashboard()" multiple style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 120px; vertical-align: middle;">
+                <select id="filter-platforms" onchange="renderDashboard()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 140px; vertical-align: middle;">
                     <option value="all" selected>كل المنصات</option>
                     <option value="meta">Meta Ads</option>
                     <option value="tiktok">TikTok Ads</option>
@@ -342,66 +347,124 @@
         renderDashboard();
     }
 }
-   function renderDashboard() {
+ let autoSyncInterval = null;
+
+function handleAutoSyncChange() {
+    const select = document.getElementById('auto-sync-select');
+    const value = select.value;
+    
+    if (autoSyncInterval) {
+        clearInterval(autoSyncInterval);
+        autoSyncInterval = null;
+    }
+    
+    if (value !== 'off') {
+        let minutes = parseInt(value) * 60 * 1000;
+        loadData(); // تحديث فوري أولاً
+        autoSyncInterval = setInterval(loadData, minutes);
+        console.log(`الوضع الآلي نشط والتحديث كل ${value} دقائق.`);
+    } else {
+        console.log("تم إيقاف الوضع الآلي.");
+    }
+}
+
+function renderDashboard() {
     const body = document.getElementById('table-body');
     const cards = document.getElementById('summary-cards');
+    const clientFilterSelect = document.getElementById('filter-clients');
     if(!body) return;
     body.innerHTML = '';
     
     let selectedDate = document.getElementById('filter-date').value;
     let selectedMonth = document.getElementById('filter-month').value;
     
-    // جلب قائمة الزبائن المسجلة في صفحة "إدارة الزبائن"
+    // قراءة القيم الحالية من القوائم المنسدلة
+    let selectedClient = document.getElementById('filter-clients').value;
+    let selectedPlatform = document.getElementById('filter-platforms').value;
+    
     let clientSettings = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+
+    // تحديث خيارات قائمة الزبائن ديناميكياً لتطابق المسجلين لديك
+    if (clientFilterSelect && clientFilterSelect.options.length <= 2) {
+        clientSettings.forEach(c => {
+            if (!Array.from(clientFilterSelect.options).some(o => o.value === c.name)) {
+                let opt = document.createElement('option');
+                opt.value = c.name;
+                opt.innerText = c.name;
+                clientFilterSelect.appendChild(opt);
+            }
+        });
+    }
 
     let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
     let todayStr = new Date().toISOString().split('T')[0];
+    let chartLabels = [];
+    let chartSpendData = [];
+    let chartProfitData = [];
 
-    // فلترة البيانات الصالحة فقط والتي تحتوي على اسم حملة فعلي من الشيت
     let validRows = allHistoryData.filter(row => row && row.campaign && row.campaign !== '-');
 
     if (validRows.length === 0) {
-        body.innerHTML = '<tr><td colspan="15">لم يتم جلب بيانات بعد. يرجى التأكد من إضافة الرابط والضغط على "تحديث يدوي".</td></tr>';
+        body.innerHTML = '<tr><td colspan="17">لم يتم جلب بيانات بعد. يرجى التأكد من إضافة الرابط والضغط على "تحديث يدوي".</td></tr>';
         return;
     }
 
     validRows.forEach(row => {
-        // إذا لم توفر أداة الربط تاريخاً، نعتمد تاريخ اليوم تلقائياً منعاً للاختفاء
         let rowDate = row.date ? row.date.split('T')[0] : todayStr;
         let rowMonth = rowDate ? rowDate.split('-')[1] : '';
 
         if (selectedDate && rowDate !== selectedDate) return;
         if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
 
+        // 1) تحديد الزبون
+        let matchedClient = clientSettings.find(c => 
+            c.name && row.campaign.toLowerCase().includes(c.name.toLowerCase())
+        );
+        let clientName = matchedClient ? matchedClient.name : "غير معرف";
+        let productName = matchedClient ? matchedClient.prod : "-";
+        
+        if (selectedClient !== 'all' && selectedClient !== clientName) return;
+
+        // 2) تحديد المنصة الإعلانية
+        let campaignLower = row.campaign.toLowerCase();
+        let platform = "meta";
+        let platformName = " Meta Ads";
+        if (campaignLower.includes("tiktok") || campaignLower.includes("tt")) { platform = "tiktok"; platformName = "🎵 TikTok"; }
+        else if (campaignLower.includes("snapchat") || campaignLower.includes("snap") || campaignLower.includes("sc")) { platform = "snapchat"; platformName = "👻 Snapchat"; }
+        else if (campaignLower.includes("google") || campaignLower.includes("gg")) { platform = "google"; platformName = "🔍 Google"; }
+
+        if (selectedPlatform !== 'all' && selectedPlatform !== platform) return;
+
         let spend = parseFloat(row.spend || 0);
+        let results = parseInt(row.results || 0);
+        // حساب الـ Cost Per Result (الصرف تقسيم النتائج) بدقة
+        let costPerResult = results > 0 ? (spend / results) : 0;
+
         totals.spend += spend;
         totals.reach += parseFloat(row.reach || 0);
         totals.impressions += parseFloat(row.impressions || 0);
         totals.count++;
 
-        // المطابقة الذكية: البحث عن اسم الزبون بغض النظر عن حالة الأحرف (كبيرة أو صغيرة)
-        let matchedClient = clientSettings.find(c => 
-            c.name && row.campaign.toLowerCase().includes(c.name.toLowerCase())
-        );
-
-        let clientName = matchedClient ? matchedClient.name : "غير معرف";
-        let productName = matchedClient ? matchedClient.prod : "-";
-        
-        // جلب نسبة فائدة الزبون، أو اعتماد 25% كقيمة افتراضية كما أعددتها لـ Ayoub
         let profitRate = matchedClient ? parseFloat(matchedClient.rate) / 100 : 0.25; 
-        
         let currentProfit = spend * profitRate;
         totals.profit += currentProfit;
         row.calculatedProfit = currentProfit; 
 
+        // تجميع بيانات المنحنى البياني
+        chartLabels.push(row.campaign.substring(0, 15) + "...");
+        chartSpendData.push(spend);
+        chartProfitData.push(currentProfit);
+
         body.innerHTML += `
             <tr>
                 <td>${clientName}</td>
+                <td style="font-weight: bold;">${platformName}</td>
                 <td style="text-align:right;">${row.campaign}</td>
                 <td>${productName}</td>
                 <td>$${parseFloat(row.dailyBudget || 0).toFixed(2)}</td>
                 <td>$${spend.toFixed(2)}</td>
-                <td style="font-weight:bold; color:var(--accent)">$${parseFloat(row.costPerAction || 0).toFixed(2)}</td>
+                <td>${results.toLocaleString()}</td>
+                <td style="font-weight:bold; color:#e67e22">$${costPerResult.toFixed(2)}</td>
                 <td>${parseInt(row.reach || 0).toLocaleString()}</td>
                 <td>${parseInt(row.impressions || 0).toLocaleString()}</td>
                 <td>${parseFloat(row.cpm || 0).toFixed(2)}</td>
@@ -416,9 +479,10 @@
     });
 
     if(totals.count === 0) {
-        body.innerHTML = '<tr><td colspan="15">لا توجد حملات مسجلة تطابق التاريخ المختار.</td></tr>';
+        body.innerHTML = '<tr><td colspan="17">لا توجد حملات مسجلة تطابق الفلاتر المختارة.</td></tr>';
     }
 
+    // تحديث كروت الـ KPIs العلوية
     cards.innerHTML = `
         <div class="stat-card"><h4>إجمالي الصرف</h4><p>$${totals.spend.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
         <div class="stat-card" style="border-top-color:#27ae60"><h4>صافي فوائدك المتوقعة</h4><p>$${totals.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
@@ -426,7 +490,29 @@
         <div class="stat-card" style="border-top-color:#9b59b6"><h4>عدد الحملات المفلترة</h4><p>${totals.count}</p></div>
     `;
 
-    updateChart();
+    // تفعيل وتحديث خطوط المنحنى البياني فوراً وضمان ظهورها
+    if(window.myChart) {
+        window.myChart.data.labels = chartLabels;
+        window.myChart.data.datasets = [
+            {
+                label: 'الصرف ($)',
+                data: chartSpendData,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                borderWidth: 2,
+                fill: true
+            },
+            {
+                label: 'صافي الأرباح ($)',
+                data: chartProfitData,
+                borderColor: '#27ae60',
+                backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                borderWidth: 2,
+                fill: true
+            }
+        ];
+        window.myChart.update();
+    }
 }
     function updateChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
