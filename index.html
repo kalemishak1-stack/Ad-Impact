@@ -260,37 +260,72 @@
     }
 
     // نظام المزامنة والاحتفاظ بالبيانات التاريخية لمنع مشكلة الـ 12am
-    async function loadData() {
-        const urls = JSON.parse(localStorage.getItem('ad_impact_sources') || '[]');
-        const tableBody = document.getElementById('table-body');
-        if(tableBody) tableBody.innerHTML = '<tr><td colspan="15">جاري التحقق من الشيتات ومزامنة الأرشيف الحصري...</td></tr>';
-        
-        try {
-            const results = await Promise.all(urls.map(url => fetch(url).then(r => r.json())));
-            let freshData = results.flat();
-            
-            let todayStr = new Date().toISOString().split('T')[0];
-
-            freshData.forEach(row => {
-                let rowDate = row.date ? row.date.split('T')[0] : todayStr;
-                
-                // البحث في الأرشيف لعدم تكرار نفس الحملة لنفس اليوم
-                let existingIdx = allHistoryData.findIndex(h => h.campaign === row.campaign && (h.date ? h.date.split('T')[0] : '') === rowDate);
-                if(existingIdx > -1) {
-                    allHistoryData[existingIdx] = {...row, date: rowDate}; // تحديث البيانات الحية
-                } else {
-                    allHistoryData.push({...row, date: rowDate}); // حفظ البيانات قبل اختفائها عند منتصف الليل
-                }
-            });
-
-            localStorage.setItem('ad_impact_history', JSON.stringify(allHistoryData));
-            renderDashboard();
-        } catch (e) {
-            console.log("تعذر جلب بيانات حية جديدة، الاعتماد على الأرشيف المخزن محلياً.");
-            renderDashboard();
-        }
+ async function loadData() {
+    const urls = JSON.parse(localStorage.getItem('ad_impact_sources') || '[]');
+    const tableBody = document.getElementById('table-body');
+    if(tableBody && allHistoryData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="15">جاري جلب البيانات الحية من مصادر الشيتات...</td></tr>';
+    }
+    
+    if(urls.length === 0) {
+        if(tableBody) tableBody.innerHTML = '<tr><td colspan="15">يرجى الانتقال إلى صفحة "مصادر الشيتات" وإضافة رابط الـ Web App أولاً.</td></tr>';
+        return;
     }
 
+    try {
+        // جلب البيانات من كافة الروابط المضافة
+        const results = await Promise.all(urls.map(url => fetch(url).then(r => r.json())));
+        let freshData = results.flat();
+        let todayStr = new Date().toISOString().split('T')[0];
+
+        // معالجة البيانات القادمة وتخزينها في الأرشيف المحلي لمنع اختفائها
+        freshData.forEach(row => {
+            if (!row) return;
+            
+            // التأكد من قراءة اسم الحملة سواء كان بالصيغة المترجمة الذكية أو الخام
+            let campaignName = row.campaign || row['Campaign name'] || '';
+            if (!campaignName || campaignName === '-') return;
+
+            let rowDate = row.date ? row.date.split('T')[0] : todayStr;
+            
+            // البحث إذا كانت الحملة مخزنة مسبقاً بنفس التاريخ لتحديثها، أو إضافتها كجديدة
+            let existingIdx = allHistoryData.findIndex(h => 
+                h.campaign === campaignName && h.date === rowDate
+            );
+            
+            let formattedRow = {
+                campaign: campaignName,
+                delivery: row.delivery || row['Campaign delivery'] || 'Active',
+                dailyBudget: parseFloat(row.dailyBudget || row['Daily budget'] || 0),
+                spend: parseFloat(row.spend || row['Amount spent'] || 0),
+                results: parseInt(row.results || row['Results'] || 0),
+                costPerAction: parseFloat(row.costPerAction || row['Cost Per Result'] || 0),
+                reach: parseInt(row.reach || row['Reach'] || 0),
+                impressions: parseInt(row.impressions || row['Impressions'] || 0),
+                cpm: parseFloat(row.cpm || row['CPM (cost per 1,000 impressions)'] || 0),
+                frequency: parseFloat(row.frequency || row['Frequency'] || 1),
+                cpc: parseFloat(row.cpc || row['CPC'] || 0),
+                ctr: parseFloat(row.ctr || row['CTR (link click-through rate)'] || 0),
+                linkCtr: parseFloat(row.linkCtr || row['Link CTR'] || 0),
+                lpv: parseInt(row.lpv || row['Landing page views'] || 0),
+                date: rowDate
+            };
+
+            if(existingIdx > -1) {
+                allHistoryData[existingIdx] = formattedRow; 
+            } else {
+                allHistoryData.push(formattedRow); 
+            }
+        });
+
+        localStorage.setItem('ad_impact_history', JSON.stringify(allHistoryData));
+        renderDashboard();
+    } catch (e) {
+        console.error("خطأ في الاتصال بالرابط: ", e);
+        // في حال وجود خطأ في الشبكة، يعرض ما هو متوفر في الأرشيف
+        renderDashboard();
+    }
+}
    function renderDashboard() {
     const body = document.getElementById('table-body');
     const cards = document.getElementById('summary-cards');
