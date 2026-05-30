@@ -106,6 +106,22 @@
                     <option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option>
                     <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
                 </select>
+                <button id="auto-sync-btn" onclick="toggleAutoSync()" style="margin-right: 10px; padding: 8px 15px; background: var(--secondary); color:white; border:none; border-radius:5px; cursor:pointer;">🔄 الوضع الآلي: متوقف</button>
+
+                <label style="margin-right: 15px;">الزبائن:</label>
+                <select id="filter-clients" onchange="renderDashboard()" multiple style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 120px; vertical-align: middle;">
+                    <option value="all" selected>كل الزبائن</option>
+                    <option value="غير معرف">غير معرف</option>
+                </select>
+
+                <label style="margin-right: 15px;">المنصة:</label>
+                <select id="filter-platforms" onchange="renderDashboard()" multiple style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; min-width: 120px; vertical-align: middle;">
+                    <option value="all" selected>كل المنصات</option>
+                    <option value="meta">Meta Ads</option>
+                    <option value="tiktok">TikTok Ads</option>
+                    <option value="snapchat">Snapchat Ads</option>
+                    <option value="google">Google Ads</option>
+                </select>
                 <button onclick="loadData()" style="margin-right:auto; padding: 8px 15px; background: var(--primary); color:white; border:none; border-radius:5px; cursor:pointer;"><i class="fas fa-sync"></i> تحديث يدوي</button>
             </div>
             
