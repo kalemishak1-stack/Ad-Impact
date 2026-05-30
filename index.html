@@ -2,125 +2,409 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Ad Impact Pro - لوحة تحكم الفريق الكاملة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Impact Enterprise - Ishak Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* تنسيقات CSS كاملة ومفصلة */
-        body { font-family: 'Segoe UI', sans-serif; background-color: #eef2f3; padding: 25px; }
-        .header { background-color: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-        .controls-panel { background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background-color: #fff; padding: 20px; border-radius: 10px; border-right: 5px solid #3498db; text-align: center; }
-        .data-table { width: 100%; border-collapse: collapse; background-color: white; border-radius: 10px; overflow: hidden; }
-        .data-table th { background-color: #34495e; color: white; padding: 15px; }
-        .data-table td { padding: 15px; border-bottom: 1px solid #ddd; text-align: center; }
-        .status-excellent { color: green; font-weight: bold; }
-        .status-poor { color: red; font-weight: bold; }
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg); color: var(--primary); }
+
+        /* Login Screen */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .login-box {
+            background: var(--white); padding: 40px; border-radius: 15px; width: 350px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .login-box h2 { margin-bottom: 20px; color: var(--primary); }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .login-box button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* Main Layout */
+        #main-app { display: none; }
+        .sidebar { position: fixed; right: 0; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; padding: 20px; }
+        .sidebar h2 { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #555; padding-bottom: 10px; }
+        .nav-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: var(--accent); }
+
+        .content { margin-right: 250px; padding: 30px; min-height: 100vh; }
+
+        /* Dashboard Elements */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid var(--accent); }
+        .stat-card h4 { font-size: 14px; color: #777; margin-bottom: 5px; }
+        .stat-card p { font-size: 20px; font-weight: bold; color: var(--primary); }
+
+        .table-container { background: white; padding: 20px; border-radius: 12px; overflow-x: auto; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8f9fa; padding: 12px; text-align: center; font-size: 13px; border-bottom: 2px solid #eee; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; font-size: 13px; }
+
+        /* Charts Section */
+        .charts-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .chart-controls { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .chart-controls select, .chart-controls input { padding: 8px; border-radius: 5px; border: 1px solid #ddd; font-size: 14px; }
+
+        /* Settings Page */
+        .settings-box { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; }
+        .source-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .source-row input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .btn-add { background: var(--accent); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+        .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+        .client-form { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: flex-end; }
+        .client-form div { display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>نظام Ad Impact للإدارة والتحليل</h1>
+<div id="login-screen">
+    <div class="login-box">
+        <i class="fas fa-user-shield fa-3x" style="color: var(--accent); margin-bottom: 15px;"></i>
+        <h2>دخول النظام</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <button onclick="login()">دخول</button>
+        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
+    </div>
 </div>
 
-<div class="controls-panel">
-    <label>رابط Google Web App:</label><br>
-    <input type="text" id="sheetUrl" style="width: 80%; padding: 10px; margin-top: 5px;" placeholder="ضع الرابط هنا...">
-    <button id="fetchBtn" style="padding: 10px 20px; background-color: #27ae60; color: white; border: none; cursor: pointer;">جلب البيانات وتحديث اللوحة</button>
-</div>
+<div id="main-app">
+    <div class="sidebar">
+        <h2>Ad Impact</h2>
+        <div class="nav-item active" onclick="showPage('dashboard')"><i class="fas fa-chart-line"></i> لوحة التحليل</div>
+        <div class="nav-item" onclick="showPage('sources')"><i class="fas fa-link"></i> مصادر الشيتات</div>
+        <div class="nav-item" onclick="showPage('clients')"><i class="fas fa-users-cog"></i> إدارة الزبائن</div>
+        <div class="nav-item" onclick="logout()" style="margin-top: 50px; color: var(--danger);"><i class="fas fa-sign-out-alt"></i> خروج</div>
+    </div>
 
-<div class="stats-grid">
-    <div class="stat-card"><h3>عدد الحملات</h3><span id="countDisplay">0</span></div>
-    <div class="stat-card"><h3>الأرباح المتوقعة</h3><span id="profitDisplay">$0</span></div>
-    <div class="stat-card"><h3>إجمالي المصروف</h3><span id="spendDisplay">$0</span></div>
-</div>
+    <div class="content">
+        <div id="page-dashboard" class="page">
+            <h2 style="margin-bottom: 20px;">لوحة تحكم Ishak الاحترافية المحدثة</h2>
+            
+            <div class="chart-controls" style="margin-bottom: 20px;">
+                <label><i class="fas fa-calendar-alt"></i> تصفية حسب التاريخ:</label>
+                <input type="date" id="filter-date" onchange="renderDashboard()">
+                <label>أو اختر الشهر:</label>
+                <select id="filter-month" onchange="renderDashboard()">
+                    <option value="all">كل الشهور</option>
+                    <option value="01">يناير</option><option value="02">فبراير</option><option value="03">مارس</option>
+                    <option value="04">أبريل</option><option value="05">مايو</option><option value="06">يونيو</option>
+                    <option value="07">يوليو</option><option value="08">أغسطس</option><option value="09">سبتمبر</option>
+                    <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+                </select>
+                <button onclick="loadData()" style="margin-right:auto; padding: 8px 15px; background: var(--primary); color:white; border:none; border-radius:5px; cursor:pointer;"><i class="fas fa-sync"></i> تحديث يدوي</button>
+            </div>
+            
+            <div class="stats-grid" id="summary-cards"></div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>اسم الحملة</th>
-            <th>الزبون</th>
-            <th>المنصة</th>
-            <th>المصروف الفعلي</th>
-            <th>عدد النتائج</th>
-            <th>التكلفة للنتيجة (CPA)</th>
-            <th>التقييم الذكي</th>
-        </tr>
-    </thead>
-    <tbody id="tableBody">
-        <!-- سيتم ملء هذا الجزء برمجياً -->
-    </tbody>
-</table>
+            <div class="table-container">
+                <table id="main-table">
+                    <thead>
+                        <tr>
+                            <th>الزبون</th><th>الحملة</th><th>المنتج</th><th>الميزانية</th><th>الصرف</th><th>CPA</th>
+                            <th>Reach</th><th>Impressions</th><th>CPM</th><th>Frequency</th><th>CPC</th><th>CTR</th>
+                            <th>Link CTR</th><th>LPV</th><th>صافي فائدتك</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-controls">
+                    <label>فترة المنحنى:</label>
+                    <select id="chart-period" onchange="updateChart()">
+                        <option value="daily">يومي</option>
+                        <option value="weekly">أسبوعي</option>
+                    </select>
+                    <label>اختر الـ KPIs في المنحنى:</label>
+                    <div id="kpi-selectors" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+                <canvas id="mainChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <div id="page-sources" class="page" style="display:none;">
+            <h2>إضافة مصادر البيانات (Google Web Apps)</h2>
+            <div class="settings-box">
+                <p style="margin-bottom: 15px; color: #666;">أضف روابط الـ Web App الخاصة بجوجل شيت هنا. يمكنك إضافة أكثر من مصدر.</p>
+                <div id="sources-list"></div>
+                <button class="btn-add" onclick="addSourceRow()"><i class="fas fa-plus"></i></button>
+                <button onclick="saveSources()" style="margin-top: 20px; padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">حفظ الروابط</button>
+            </div>
+        </div>
+
+        <div id="page-clients" class="page" style="display:none;">
+            <h2>إدارة الزبائن والمنتجات ونسب الأرباح</h2>
+            <div class="settings-box">
+                <h3>إضافة منتج لزبون مع تحديد نسبة فائدتك</h3>
+                <div class="client-form">
+                    <div><label>اسم الزبون</label><input type="text" id="c-name" placeholder="مثال: متجر الأناقة"></div>
+                    <div><label>اسم المنتج</label><input type="text" id="p-name" placeholder="مثال: عطر ملكي"></div>
+                    <div><label>متوسط التكلفة</label><input type="number" id="p-cost" placeholder="0.00"></div>
+                    <div><label>نسبة فائدتك (%)</label><input type="number" id="p-profit-rate" placeholder="20" value="20"></div>
+                    <button onclick="addClientProduct()" style="padding: 10px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer;">إضافة</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <h3>المنتجات والنسب المسجلة</h3>
+                <table id="clients-table">
+                    <thead><tr><th>الزبون</th><th>المنتج</th><th>Target Cost</th><th>نسبة الفائدة</th><th>إجراء</th></tr></thead>
+                    <tbody id="clients-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-    /* القسم البرمجي (JavaScript) - منطق تشغيل النظام */
-    
-    document.getElementById('fetchBtn').addEventListener('click', function() {
-        const url = document.getElementById('sheetUrl').value;
-        if (!url) {
-            alert("يرجى إدخال الرابط أولاً!");
-            return;
+    let allHistoryData = JSON.parse(localStorage.getItem('ad_impact_history') || '[]');
+    let myChart = null;
+    const KPI_LIST = [
+        {key: 'dailyBudget', label: 'Budget'}, {key: 'spend', label: 'Spend'},
+        {key: 'costPerAction', label: 'CPA'}, {key: 'reach', label: 'Reach'},
+        {key: 'impressions', label: 'Impressions'}, {key: 'cpm', label: 'CPM'},
+        {key: 'frequency', label: 'Frequency'}, {key: 'cpc', label: 'CPC'},
+        {key: 'ctr', label: 'CTR'}, {key: 'linkCtr', label: 'Link CTR'},
+        {key: 'lpv', label: 'LPV'}, {key: 'calculatedProfit', label: 'Profit'}
+    ];
+
+    // Initialize UI Selectors
+    const kpiBox = document.getElementById('kpi-selectors');
+    KPI_LIST.forEach(kpi => {
+        kpiBox.innerHTML += `<label style="font-size:12px; margin-left:8px;"><input type="checkbox" value="${kpi.key}" onchange="updateChart()"> ${kpi.label}</label>`;
+    });
+
+    // افتراض تاريخ اليوم تلقائياً عند فتح اللوحة
+    document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
+
+    function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        if(u === 'Ishak' && p === 'Ishakiyad1@') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            loadData(); // تحميل وجلب تلقائي فوري عند الدخول دون تدخل منك
+        } else {
+            document.getElementById('login-err').style.display = 'block';
+        }
+    }
+
+    function logout() { location.reload(); }
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.getElementById('page-' + pageId).style.display = 'block';
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    function addSourceRow(val = '') {
+        const container = document.getElementById('sources-list');
+        const div = document.createElement('div');
+        div.className = 'source-row';
+        div.innerHTML = `<input type="text" class="source-input" value="${val}" placeholder="https://script.google.com/macros/s/..."><button class="btn-del" onclick="this.parentElement.remove()">حذف</button>`;
+        container.appendChild(div);
+    }
+
+    function saveSources() {
+        const inputs = document.querySelectorAll('.source-input');
+        const urls = Array.from(inputs).map(i => i.value).filter(v => v !== '');
+        localStorage.setItem('ad_impact_sources', JSON.stringify(urls));
+        alert('تم حفظ المصادر بنجاح وسيتم المزامنة تلقائياً!');
+        loadData();
+    }
+
+    function addClientProduct() {
+        const name = document.getElementById('c-name').value;
+        const prod = document.getElementById('p-name').value;
+        const cost = document.getElementById('p-cost').value;
+        const rate = document.getElementById('p-profit-rate').value;
+        if(!name || !prod) return;
+        let list = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+        list.push({name, prod, cost, rate: parseFloat(rate || 20)});
+        localStorage.setItem('ad_impact_clients', JSON.stringify(list));
+        renderClientsTable();
+        renderDashboard();
+    }
+
+    function renderClientsTable() {
+        const body = document.getElementById('clients-body');
+        body.innerHTML = '';
+        let list = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+        list.forEach((item, index) => {
+            body.innerHTML += `<tr><td>${item.name}</td><td>${item.prod}</td><td>${item.cost}</td><td>${item.rate || 20}%</td><td><button class="btn-del" onclick="deleteClient(${index})">حذف</button></td></tr>`;
+        });
+    }
+
+    function deleteClient(idx) {
+        let list = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+        list.splice(idx, 1);
+        localStorage.setItem('ad_impact_clients', JSON.stringify(list));
+        renderClientsTable();
+        renderDashboard();
+    }
+
+    // نظام المزامنة والاحتفاظ بالبيانات التاريخية لمنع مشكلة الـ 12am
+    async function loadData() {
+        const urls = JSON.parse(localStorage.getItem('ad_impact_sources') || '[]');
+        const tableBody = document.getElementById('table-body');
+        if(tableBody) tableBody.innerHTML = '<tr><td colspan="15">جاري التحقق من الشيتات ومزامنة الأرشيف الحصري...</td></tr>';
+        
+        try {
+            const results = await Promise.all(urls.map(url => fetch(url).then(r => r.json())));
+            let freshData = results.flat();
+            
+            let todayStr = new Date().toISOString().split('T')[0];
+
+            freshData.forEach(row => {
+                let rowDate = row.date ? row.date.split('T')[0] : todayStr;
+                
+                // البحث في الأرشيف لعدم تكرار نفس الحملة لنفس اليوم
+                let existingIdx = allHistoryData.findIndex(h => h.campaign === row.campaign && (h.date ? h.date.split('T')[0] : '') === rowDate);
+                if(existingIdx > -1) {
+                    allHistoryData[existingIdx] = {...row, date: rowDate}; // تحديث البيانات الحية
+                } else {
+                    allHistoryData.push({...row, date: rowDate}); // حفظ البيانات قبل اختفائها عند منتصف الليل
+                }
+            });
+
+            localStorage.setItem('ad_impact_history', JSON.stringify(allHistoryData));
+            renderDashboard();
+        } catch (e) {
+            console.log("تعذر جلب بيانات حية جديدة، الاعتماد على الأرشيف المخزن محلياً.");
+            renderDashboard();
+        }
+    }
+
+    function renderDashboard() {
+        const body = document.getElementById('table-body');
+        const cards = document.getElementById('summary-cards');
+        if(!body) return;
+        body.innerHTML = '';
+        
+        let selectedDate = document.getElementById('filter-date').value;
+        let selectedMonth = document.getElementById('filter-month').value;
+        let clientSettings = JSON.parse(localStorage.getItem('ad_impact_clients') || '[]');
+
+        let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
+
+        allHistoryData.forEach(row => {
+            let rowDate = row.date || '';
+            let rowMonth = rowDate ? rowDate.split('-')[1] : '';
+
+            // تصفية ديناميكية بناءً على اختيار التاريخ أو الشهر
+            if (selectedDate && rowDate !== selectedDate) return;
+            if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
+
+            let spend = parseFloat(row.spend || 0);
+            totals.spend += spend;
+            totals.reach += parseFloat(row.reach || 0);
+            totals.impressions += parseFloat(row.impressions || 0);
+            totals.count++;
+
+            // استخراج نسبة فائدة الزبون المحددة له خصيصاً أو تطبيق 20% كافتراضي
+            let match = clientSettings.find(c => c.name === row.client);
+            let profitRate = match ? match.rate / 100 : 0.20;
+            let currentProfit = spend * profitRate;
+            totals.profit += currentProfit;
+            row.calculatedProfit = currentProfit; // للحفظ داخل الكائن واستخدامه بالرسم البياني
+
+            body.innerHTML += `
+                <tr>
+                    <td>${row.client || '-'}</td>
+                    <td>${row.campaign || '-'}</td>
+                    <td>${row.product || '-'}</td>
+                    <td>$${row.dailyBudget || 0}</td>
+                    <td>$${spend.toFixed(2)}</td>
+                    <td style="font-weight:bold; color:var(--accent)">$${parseFloat(row.costPerAction || 0).toFixed(2)}</td>
+                    <td>${parseInt(row.reach || 0).toLocaleString()}</td>
+                    <td>${parseInt(row.impressions || 0).toLocaleString()}</td>
+                    <td>${row.cpm || 0}</td>
+                    <td>${row.frequency || 0}</td>
+                    <td>$${row.cpc || 0}</td>
+                    <td>${row.ctr || 0}%</td>
+                    <td>${row.linkCtr || 0}%</td>
+                    <td>${row.lpv || 0}</td>
+                    <td style="color:var(--accent); font-weight:bold;">$${currentProfit.toFixed(2)} (${(profitRate*100)}%)</td>
+                </tr>
+            `;
+        });
+
+        if(totals.count === 0) {
+            body.innerHTML = '<tr><td colspan="15">لا توجد بيانات مسجلة لهذا التاريخ المحدد.</td></tr>';
         }
 
-        // جلب البيانات من جوجل شيت
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('tableBody');
-                tableBody.innerHTML = ''; // تفريغ الجدول قبل التحديث
-                
-                let totalSpend = 0;
-                let campaignCount = data.length;
+        cards.innerHTML = `
+            <div class="stat-card"><h4>إجمالي الصرف</h4><p>$${totals.spend.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
+            <div class="stat-card" style="border-top-color:#27ae60"><h4>صافي فوائدك المتوقعة</h4><p>$${totals.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</p></div>
+            <div class="stat-card" style="border-top-color:#3498db"><h4>إجمالي Reach</h4><p>${totals.reach.toLocaleString()}</p></div>
+            <div class="stat-card" style="border-top-color:#9b59b6"><h4>عدد الحملات المفلترة</h4><p>${totals.count}</p></div>
+        `;
 
-                data.forEach(item => {
-                    const name = item["اسم الحملة"] || "غير مسمى";
-                    const client = item["الزبون"] || "غير معروف";
-                    const platform = item["المنصة"] || "N/A";
-                    const spend = parseFloat(item["المبلغ المصروف"] || 0);
-                    const results = parseInt(item["النتائج"] || 0);
-                    const cpa = parseFloat(item["تكلفة النتيجة"] || 0);
+        updateChart();
+    }
 
-                    totalSpend += spend;
+    function updateChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const selectedKPIs = Array.from(document.querySelectorAll('#kpi-selectors input:checked')).map(i => i.value);
+        
+        if(myChart) myChart.destroy();
 
-                    // منطق التقييم الذكي المفصل
-                    let evaluation = "";
-                    let evalClass = "";
-                    
-                    if (cpa <= 2.0) {
-                        evaluation = "ممتاز";
-                        evalClass = "status-excellent";
-                    } else if (cpa > 2.0 && cpa <= 3.5) {
-                        evaluation = "متوسط";
-                        evalClass = "";
-                    } else {
-                        evaluation = "ضعيف";
-                        evalClass = "status-poor";
-                    }
-
-                    // بناء صف الجدول
-                    const row = `<tr>
-                        <td>${name}</td>
-                        <td>${client}</td>
-                        <td>${platform}</td>
-                        <td>$${spend.toFixed(2)}</td>
-                        <td>${results}</td>
-                        <td>$${cpa.toFixed(2)}</td>
-                        <td class="${evalClass}">${evaluation}</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-                });
-
-                // تحديث ملخص الأرقام
-                document.getElementById('countDisplay').innerText = campaignCount;
-                document.getElementById('spendDisplay').innerText = "$" + totalSpend.toFixed(2);
-                document.getElementById('profitDisplay').innerText = "$" + (totalSpend * 0.2).toFixed(2);
-            })
-            .catch(error => {
-                console.error("خطأ:", error);
-                alert("حدث خطأ أثناء جلب البيانات، تأكد من إعدادات النشر في Google Sheets");
+        // تجميع البيانات للمنحنى البياني بناء على التواريخ المتوفرة
+        let uniqueDates = [...new Set(allHistoryData.map(d => d.date))].sort();
+        
+        const datasets = selectedKPIs.map(kpiKey => {
+            const kpiInfo = KPI_LIST.find(k => k.key === kpiKey);
+            
+            // حساب مجموع الـ KPI لكل تاريخ بشكل مستقل
+            let dataPoints = uniqueDates.map(date => {
+                return allHistoryData
+                    .filter(d => d.date === date)
+                    .reduce((sum, current) => sum + parseFloat(current[kpiKey] || 0), 0);
             });
-    });
-</script>
 
+            return {
+                label: kpiInfo.label,
+                data: dataPoints,
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                backgroundColor: 'transparent',
+                tension: 0.2,
+                borderWidth: 2
+            };
+        });
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: uniqueDates, datasets },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'top' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    window.onload = () => {
+        const savedSources = JSON.parse(localStorage.getItem('ad_impact_sources') || '[]');
+        if(savedSources.length === 0) addSourceRow();
+        else savedSources.forEach(s => addSourceRow(s));
+        renderClientsTable();
+    };
+</script>
 </body>
 </html>
