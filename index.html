@@ -306,9 +306,9 @@
     let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
 
     allHistoryData.forEach(row => {
-        let rowDate = row.date || '';
-        let rowMonth = rowDate ? rowDate.split('-')[1] : '';
-
+       // إذا كان التاريخ غير موجود في الشيت، يضع تاريخ اليوم تلقائياً لكي لا تختفي الحملة
+let todayStr = new Date().toISOString().split('T')[0];
+let rowDate = row.date ? row.date.split('T')[0] : todayStr;
         if (selectedDate && rowDate !== selectedDate) return;
         if (selectedMonth !== 'all' && rowMonth !== selectedMonth) return;
 
