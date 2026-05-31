@@ -72,16 +72,15 @@
 <body>
 
 <div id="login-screen">
-    <form class="login-box" onsubmit="event.preventDefault(); (function(){
-        const u = document.getElementById('username').value.trim(); 
-        const p = document.getElementById('password').value.trim(); 
-        const err = document.getElementById('login-err'); 
-        if(u === 'Ishak' && p === 'Ishakiyad1'){ 
-            if(err) err.style.display = 'none'; 
-            document.getElementById('login-screen').style.display = 'none'; 
-            document.getElementById('main-app').style.display = 'block'; 
-            if(typeof loadData === 'function') loadData(); 
-        } else { 
+    <div class="login-box">
+        <i class="fas fa-user-shield fa-3x" style="color: var(--accent); margin-bottom: 15px;"></i>
+        <h2>دخول النظام</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <button type="button" onclick="execLogin()">دخول</button>
+        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
+    </div>
+</div>
             if(err) err.style.display = 'block'; 
         }
     })()">
@@ -426,7 +425,25 @@ function renderDashboard() {
             }
         });
     }
+function execLogin() {
+    const userInp = document.getElementById('username').value.trim();
+    const passInp = document.getElementById('password').value.trim();
+    const loginErr = document.getElementById('login-err');
 
+    // التحقق الصارم من الحساب الخاص بك
+    if (userInp === 'Ishak' && passInp === 'Ishakiyad1@') {
+        if(loginErr) loginErr.style.display = 'none';
+        
+        // إخفاء الشاشة وإظهار لوحة التحكم
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        
+        // جلب البيانات فوراً
+        if(typeof loadData === 'function') loadData();
+    } else {
+        if(loginErr) loginErr.style.display = 'block';
+    }
+}
     let totals = { spend: 0, reach: 0, impressions: 0, profit: 0, count: 0 };
     let todayStr = new Date().toISOString().split('T')[0];
     let chartLabels = [];
