@@ -70,26 +70,28 @@
     </style>
 </head>
 <body>
-
-<div id="login-screen">
-    <div class="login-box">
-        <i class="fas fa-user-shield fa-3x" style="color: var(--accent); margin-bottom: 15px;"></i>
-        <h2>دخول النظام</h2>
-        <input type="text" id="username" placeholder="اسم المستخدم">
-        <input type="password" id="password" placeholder="كلمة المرور">
-        <button onclick="login()">دخول</button>
-        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
-    </div>
-</div>
-            if(mainApp) { mainApp.style.setProperty('display', 'block', 'important'); }
-            if(typeof loadData === 'function') { try { loadData(); } catch(e){} }
+<div id="login-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a252f; display: flex; align-items: center; justify-content: center; z-index: 999999;">
+    <div class="login-box" style="background: white; padding: 40px; border-radius: 15px; width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+        <i class="fas fa-user-shield fa-3x" style="color: #2ecc71; margin-bottom: 15px;"></i>
+        <h2 style="color: #1a252f; margin-bottom: 20px;">دخول النظام</h2>
+        
+        <input type="text" id="auth-user" placeholder="اسم المستخدم" value="Ishak" style="width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+        <input type="password" id="auth-pass" placeholder="كلمة المرور" value="Ishakiyad1@" style="width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+        
+        <button type="button" onclick="
+            const u = document.getElementById('auth-user').value.trim();
+            const p = document.getElementById('auth-pass').value.trim();
+            if(u === 'Ishak' && p === 'Ishakiyad1@') {
+                document.getElementById('login-screen').style.setProperty('display', 'none', 'important');
+                const mainApp = document.getElementById('main-app');
+                if(mainApp) { mainApp.style.setProperty('display', 'block', 'important'); }
+                if(typeof loadData === 'function') { try { loadData(); } catch(e){} }
+            } else {
+                document.getElementById('login-error-msg').style.display = 'block';
+            }
         " style="width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 15px;">دخول</button>
         
-        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
-    </div>
-</div>
-        
-        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
+        <p id="login-error-msg" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
     </div>
 </div>
                 if(err) err.style.display = 'none'; 
