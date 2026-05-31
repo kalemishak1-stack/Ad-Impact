@@ -77,11 +77,15 @@
         <h2>دخول النظام</h2>
         <input type="text" id="username" placeholder="اسم المستخدم">
         <input type="password" id="password" placeholder="كلمة المرور">
-        <button type="button" onclick="(function(){
-            const u = document.getElementById('username').value.trim(); 
-            const p = document.getElementById('password').value.trim(); 
-            const err = document.getElementById('login-err'); 
-            if(u === 'Ishak' && p === 'Ishakiyad1@'){ 
+        
+        <button type="button" onclick="
+            document.getElementById('login-screen').style.setProperty('display', 'none', 'important'); 
+            document.getElementById('main-app').style.setProperty('display', 'block', 'important');
+        ">دخول مباشر</button>
+        
+        <p id="login-err" style="color:red; margin-top:10px; display:none;">بيانات الدخول خاطئة</p>
+    </div>
+</div>
                 if(err) err.style.display = 'none'; 
                 document.getElementById('login-screen').style.display = 'none'; 
                 document.getElementById('main-app').style.display = 'block'; 
