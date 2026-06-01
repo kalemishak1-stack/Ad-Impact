@@ -1269,6 +1269,83 @@
             const count = document.getElementById('sheets-table-body').querySelectorAll('tr').length;
             document.getElementById('sheets-counter').innerText = `${count} مصادر مرتبطة`;
         }
+                // دالة ذكية تقرأ الزبائن الذين تديرهم أنت في جدولك وتضعهم في القائمة المنسدلة تلقائياً
+function autoLoadClientsIntoDropdown() {
+    const clientSelect = document.getElementById('main-client-filter');
+    const tbody = document.getElementById('campaign-table-rows');
+    if (!clientSelect || !tbody) return;
+
+    const savedValue = clientSelect.value;
+    const uniqueClients = new Set();
+    
+    // سحب الأسماء من الخلية الأولى لكل سطر
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const firstCell = row.cells[0];
+        if (firstCell && firstCell.innerText.trim() !== "" && !firstCell.hasAttribute('colspan')) {
+            uniqueClients.add(firstCell.innerText.trim());
+        }
+    });
+
+    clientSelect.innerHTML = '<option value="all">All Clients</option>';
+    uniqueClients.forEach(client => {
+        const opt = document.createElement('option');
+        opt.value = client;
+        opt.innerText = client;
+        if (client === savedValue) opt.selected = true;
+        clientSelect.appendChild(opt);
+    });
+}
+
+// الدالة المسؤولة عن تصفية وحجب الأسطر حياً عند الضغط وتحديث الكروت العلوية
+function applyAllDashboardFilters() {
+    const platformFilter = document.getElementById('main-platform-filter').value;
+    const clientFilter = document.getElementById('main-client-filter').value;
+    const tbody = document.getElementById('campaign-table-rows');
+    if (!tbody) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    let totalSpend = 0;
+
+    rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+
+        const clientName = row.cells[0] ? row.cells[0].innerText.trim() : '';
+        const platformText = row.cells[2] ? row.cells[2].innerText.trim() : '';
+        const spendCellVal = row.cells[4] ? parseFloat(row.cells[4].innerText.replace(/[^0-9.]/g, '')) || 0 : 0;
+
+        const matchClient = (clientFilter === 'all' || clientName === clientFilter);
+        const matchPlatform = (platformFilter === 'all' || platformText.toLowerCase().includes(platformFilter.toLowerCase()));
+
+        if (matchClient && matchPlatform) {
+            row.style.style.display = ""; // إظهار
+            totalSpend += spendCellVal;
+        } else {
+            row.style.display = "none"; // إخفاء
+        }
+    });
+
+    // إذا كانت لديك كروت إحصائية وتريدها أن تتحدث مع الفلتر حياً:
+    const spendCard = document.getElementById('stat-spend') || document.querySelector('.stat-card h3');
+    if (spendCard && totalSpend > 0) {
+        spendCard.innerText = totalSpend.toLocaleString() + " دج";
+    }
+}
+
+// إطلاق النظام ومراقبته فور تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    autoLoadClientsIntoDropdown();
+    applyAllDashboardFilters();
+
+    // مراقبة الجدول لو قمت بإضافة أسطر جديدة يتحدث الفلتر فوراً
+    const tbody = document.getElementById('campaign-table-rows');
+    if (tbody) {
+        const observer = new MutationObserver(() => {
+            autoLoadClientsIntoDropdown();
+        });
+        observer.observe(tbody, { childList: true, characterData: true, subtree: true });
+    }
+});
     </script>
 </body>
 </html>
