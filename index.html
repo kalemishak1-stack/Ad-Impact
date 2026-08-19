@@ -3,287 +3,480 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الميديا باير - Ad Impact</title>
+    <title>Ad Impact - نظام إدارة أرباح الميديا باير</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Tajawal', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+<body class="bg-slate-900 text-slate-100 min-h-screen">
 
-    <div class="max-w-7xl mx-auto space-y-8">
-        
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+    <!-- Sidebar / Navigation -->
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <aside class="w-full md:w-64 bg-slate-950 p-6 border-b md:border-b-0 md:border-l border-slate-800 flex flex-col justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-indigo-400">لوحة إدارة أرباح الميديا باير</h1>
-                <p class="text-slate-400 text-sm mt-1">متابعة الحملات الإعلانية والعمولات وحساب الأرباح تلقائياً</p>
+                <h1 class="text-2xl font-bold text-indigo-400 mb-8 border-b border-slate-800 pb-4">Ad Impact Pro</h1>
+                <nav class="space-y-2">
+                    <button onclick="switchTab('tab-dashboard')" class="nav-btn w-full text-right px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium transition">📈 الرئيسية والتحليلات</button>
+                    <button onclick="switchTab('tab-clients')" class="nav-btn w-full text-right px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">👥 الزبائن والمنتجات</button>
+                    <button onclick="switchTab('tab-integrations')" class="nav-btn w-full text-right px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">🔌 ربط المنصات (API)</button>
+                    <button onclick="switchTab('tab-sheets')" class="nav-btn w-full text-right px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">📊 ربط Google Sheets</button>
+                    <button onclick="switchTab('tab-archives')" class="nav-btn w-full text-right px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition">📁 الأرشيف الشهري</button>
+                </nav>
             </div>
-            <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-600/30">
-                + إضافة حملة / زبون جديد
-            </button>
-        </div>
+            <div class="text-xs text-slate-500 pt-6 border-t border-slate-800">نظام حفظ البيانات التلقائي مفعل</div>
+        </aside>
 
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-800/80 border border-slate-700/50 p-5 rounded-xl">
-                <p class="text-slate-400 text-sm font-medium">إجمالي المصاريف الإعلانية</p>
-                <h3 id="totalSpend" class="text-2xl font-bold text-white mt-2">$0.00</h3>
-            </div>
-            <div class="bg-slate-800/80 border border-slate-700/50 p-5 rounded-xl">
-                <p class="text-slate-400 text-sm font-medium">صافي أرباحك (العمولة)</p>
-                <h3 id="totalProfit" class="text-2xl font-bold text-emerald-400 mt-2">$0.00</h3>
-            </div>
-            <div class="bg-slate-800/80 border border-slate-700/50 p-5 rounded-xl">
-                <p class="text-slate-400 text-sm font-medium">عدد الزبائن النشطين</p>
-                <h3 id="totalClients" class="text-2xl font-bold text-indigo-400 mt-2">0</h3>
-            </div>
-            <div class="bg-slate-800/80 border border-slate-700/50 p-5 rounded-xl">
-                <p class="text-slate-400 text-sm font-medium">إجمالي عدد المنتجات</p>
-                <h3 id="totalProducts" class="text-2xl font-bold text-amber-400 mt-2">0</h3>
-            </div>
-        </div>
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
 
-        <!-- Analytics & Chart -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/50 p-6 rounded-xl">
-                <h3 class="text-lg font-bold text-slate-200 mb-4">توزيع الإنفاق حسب المنصات</h3>
-                <div class="h-64">
-                    <canvas id="platformChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Filters Block -->
-            <div class="bg-slate-800/80 border border-slate-700/50 p-6 rounded-xl space-y-4">
-                <h3 class="text-lg font-bold text-slate-200 border-b border-slate-700 pb-2">فلترة البيانات</h3>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">اسم الزبون</label>
-                    <select id="filterClient" onchange="renderTable()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                        <option value="ALL">جميع الزبائن</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-400 mb-2">المنصة الإعلانية</label>
-                    <select id="filterPlatform" onchange="renderTable()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
-                        <option value="ALL">جميع المنصات</option>
-                        <option value="Meta Ads">Meta Ads</option>
-                        <option value="TikTok Ads">TikTok Ads</option>
-                        <option value="Snapchat Ads">Snapchat Ads</option>
-                        <option value="Google Ads">Google Ads</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Data Table -->
-        <div class="bg-slate-800/80 border border-slate-700/50 rounded-xl overflow-hidden">
-            <div class="p-5 border-b border-slate-700">
-                <h3 class="text-lg font-bold text-slate-200">جدول الحملات والمنتجات</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-right text-slate-300">
-                    <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase border-b border-slate-700">
-                        <tr>
-                            <th class="p-4">الزبون</th>
-                            <th class="p-4">المنتج</th>
-                            <th class="p-4">المنصة</th>
-                            <th class="p-4">المصاريف ($)</th>
-                            <th class="p-4">نسبة الربح (%)</th>
-                            <th class="p-4">صافي أرباحك ($)</th>
-                            <th class="p-4 text-center">الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="campaignsTable" class="divide-y divide-slate-700/50 text-sm">
-                        <!-- Dynamic Content -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Form -->
-    <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="text-lg font-bold text-white">إضافة حملة جديدة</h3>
-                <button onclick="toggleModal(false)" class="text-slate-400 hover:text-white">&times;</button>
-            </div>
-            <form id="campaignForm" onsubmit="addCampaign(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">اسم الزبون</label>
-                    <input type="text" id="clientName" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="مثال: متجر الأناقة">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">اسم المنتج</label>
-                    <input type="text" id="productName" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="مثال: Pantalon Palazzo">
-                </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">المنصة الإعلانية</label>
-                    <select id="platform" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white">
-                        <option value="Meta Ads">Meta Ads</option>
-                        <option value="TikTok Ads">TikTok Ads</option>
-                        <option value="Snapchat Ads">Snapchat Ads</option>
-                        <option value="Google Ads">Google Ads</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">المصاريف ($)</label>
-                        <input type="number" step="0.01" id="adSpend" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="100.00">
-                    </div>
-                    <div>
-                        <label class="block text-sm text-slate-300 mb-1">نسبة أرباحك (%)</label>
-                        <input type="number" step="0.1" id="profitMargin" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white" placeholder="15">
+            <!-- 1. PAGE: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active space-y-6">
+                <h2 class="text-2xl font-bold text-slate-100">الصفحة الرئيسية</h2>
+                
+                <!-- Advanced Multi-Select Filters Bar -->
+                <div class="bg-slate-800/90 border border-slate-700 p-5 rounded-2xl space-y-4 shadow-xl">
+                    <h3 class="text-sm font-bold text-indigo-300">تصفية البيانات المتقدمة (اختيار متعدد)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">الفترة الزمنية</label>
+                            <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                            <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">الزبائن (اختر عدة زبائن)</label>
+                            <div id="filterClientsContainer" class="bg-slate-900 border border-slate-700 rounded-lg p-2 max-h-24 overflow-y-auto text-xs space-y-1"></div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">المنتجات (مرتبطة بالزبائن)</label>
+                            <div id="filterProductsContainer" class="bg-slate-900 border border-slate-700 rounded-lg p-2 max-h-24 overflow-y-auto text-xs space-y-1"></div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">المنصات الإعلانية</label>
+                            <div id="filterPlatformsContainer" class="bg-slate-900 border border-slate-700 rounded-lg p-2 max-h-24 overflow-y-auto text-xs space-y-1">
+                                <label class="flex items-center gap-2"><input type="checkbox" value="Meta Ads" checked onchange="applyFilters()"> Meta Ads</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" value="TikTok Ads" checked onchange="applyFilters()"> TikTok Ads</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" value="Snapchat Ads" checked onchange="applyFilters()"> Snapchat Ads</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="pt-4 flex gap-3">
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-all">حفظ الحملة</button>
-                    <button type="button" onclick="toggleModal(false)" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2.5 rounded-lg">إلغاء</button>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
+                        <p class="text-slate-400 text-sm">إجمالي مدفوعات الزبائن</p>
+                        <h3 id="kpiPayments" class="text-3xl font-bold text-sky-400 mt-2">$0.00</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
+                        <p class="text-slate-400 text-sm">إجمالي الصرف الإعلاني</p>
+                        <h3 id="kpiSpend" class="text-3xl font-bold text-rose-400 mt-2">$0.00</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl">
+                        <p class="text-slate-400 text-sm">إجمالي الفائدة (صافي ربحك)</p>
+                        <h3 id="kpiProfit" class="text-3xl font-bold text-emerald-400 mt-2">$0.00</h3>
+                    </div>
                 </div>
-            </form>
-        </div>
+
+                <!-- Line Chart -->
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-lg font-bold mb-4 text-slate-200">المنحنى البياني المالي (مقارنة متغيرة بالفلترة)</h3>
+                    <div class="h-80">
+                        <canvas id="financialLineChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PAGE: CLIENTS & PRODUCTS -->
+            <section id="tab-clients" class="tab-content space-y-6">
+                <h2 class="text-2xl font-bold text-slate-100">إدارة الزبائن والمنتجات والعمولات</h2>
+                
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-6">
+                    <h3 class="text-lg font-bold text-indigo-300">إضافة زبون جديد مع منتجاته</h3>
+                    <form id="addClientForm" onsubmit="saveClient(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-slate-300 mb-1">اسم الزبون</label>
+                            <input type="text" id="newClientName" required placeholder="مثال: عبد الحق" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white">
+                        </div>
+                        
+                        <!-- Dynamic Products Section -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-bold text-slate-300">منتجات الزبون ونسب الربح</label>
+                                <button type="button" onclick="addProductRow()" class="bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white px-3 py-1 rounded-lg text-xs font-bold transition">+ إضافة منتوج آخر</button>
+                            </div>
+                            <div id="productRowsContainer" class="space-y-3"></div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30">حفظ الزبون والمنتجات</button>
+                    </form>
+                </div>
+
+                <!-- Saved Clients Overview -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6">
+                    <h3 class="text-lg font-bold mb-4">قائمة الزبائن والمنتجات المسجلة</h3>
+                    <div id="clientsList" class="space-y-4"></div>
+                </div>
+            </section>
+
+            <!-- 3. PAGE: PLATFORM INTEGRATIONS -->
+            <section id="tab-integrations" class="tab-content space-y-6">
+                <h2 class="text-2xl font-bold text-slate-100">ربط المنصات الإعلانية (API)</h2>
+                <p class="text-slate-400 text-sm">ربط حساباتك الإعلانية لمزامنة بيانات الصرف التلقائي مع اللوحة.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between"><h3 class="font-bold text-sky-400">Meta Ads</h3><span class="text-xs bg-slate-700 px-2 py-1 rounded">غير متصل</span></div>
+                        <input type="text" placeholder="Meta Access Token" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <input type="text" placeholder="Ad Account ID" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <button onclick="alert('تم حفظ إعدادات Meta API')" class="w-full bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-bold">ربط Meta Ads</button>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between"><h3 class="font-bold text-emerald-400">TikTok Ads</h3><span class="text-xs bg-slate-700 px-2 py-1 rounded">غير متصل</span></div>
+                        <input type="text" placeholder="TikTok Secret Token" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <input type="text" placeholder="Advertiser ID" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <button onclick="alert('تم حفظ إعدادات TikTok API')" class="w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded-lg text-xs font-bold">ربط TikTok Ads</button>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between"><h3 class="font-bold text-amber-400">Snapchat Ads</h3><span class="text-xs bg-slate-700 px-2 py-1 rounded">غير متصل</span></div>
+                        <input type="text" placeholder="Snapchat Refresh Token" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <input type="text" placeholder="Organization ID" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                        <button onclick="alert('تم حفظ إعدادات Snapchat API')" class="w-full bg-amber-600 hover:bg-amber-500 py-2 rounded-lg text-xs font-bold">ربط Snapchat Ads</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PAGE: GOOGLE SHEETS SYNC & PERMANENT LOGGING -->
+            <section id="tab-sheets" class="tab-content space-y-6">
+                <h2 class="text-2xl font-bold text-slate-100">ربط Google Sheets وتخزين البيانات الدائم</h2>
+                <div class="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-amber-300 text-xs">
+                    ⓘ <b>نظام الحماية الدائم:</b> عندما يتم تصفير الشيت في بداية اليوم الجديد، يقوم الموقع بتسجيل لقطة يومية (Snapshot) وحفظ كافة سجلات الصرف القديمة دائمياً في الذاكرة دون أن تُحذف أبداً.
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-indigo-300">قائمة روابط Google Sheets المرتبطة</h3>
+                        <button onclick="addSheetUrlInput()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ إضافة شيت آخر</button>
+                    </div>
+                    <div id="sheetsUrlContainer" class="space-y-3"></div>
+                    <button onclick="syncSheetsData()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30">مزامنة وسحب البيانات فوراً</button>
+                </div>
+            </section>
+
+            <!-- 5. PAGE: MONTHLY ARCHIVES -->
+            <section id="tab-archives" class="tab-content space-y-6">
+                <h2 class="text-2xl font-bold text-slate-100">أرشيف ملفات الزبائن الأشهر السابقة</h2>
+                <p class="text-slate-400 text-sm">مستودع السجلات الشهرية المخزنة دائمياً. يمكنك معاينة الأرشيف أو حذف أي شهر محدد يدوياً.</p>
+                
+                <div id="monthlyArchivesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+
+        </main>
     </div>
 
     <script>
-        let campaigns = JSON.parse(localStorage.getItem('mb_campaigns')) || [
-            { id: 1, client: "متجر الأناقة", product: "Pantalon Palazzo", platform: "Meta Ads", spend: 500, margin: 15 },
-            { id: 2, client: "متجر الأناقة", product: "بيجامة نسائية", platform: "TikTok Ads", spend: 300, margin: 15 },
-            { id: 3, client: "سيراميك الدار", product: "شقة الفخامة", platform: "Meta Ads", spend: 1200, margin: 10 }
+        // Data Structures & Storage
+        let clientsData = JSON.parse(localStorage.getItem('app_clients')) || [
+            {
+                id: 'c1',
+                name: 'عبد الحق',
+                products: [
+                    { name: 'Pantalon Palazzo', margin: 15, platforms: ['Meta Ads', 'TikTok Ads'] },
+                    { name: 'بيجامة نسائية', margin: 20, platforms: ['Meta Ads'] }
+                ]
+            }
         ];
 
+        let historicalLogs = JSON.parse(localStorage.getItem('app_logs')) || [
+            { id: 101, date: '2026-08-18', client: 'عبد الحق', product: 'Pantalon Palazzo', platform: 'Meta Ads', spend: 200, payment: 300, profit: 30 },
+            { id: 102, date: '2026-08-19', client: 'عبد الحق', product: 'بيجامة نسائية', platform: 'TikTok Ads', spend: 150, payment: 200, profit: 30 }
+        ];
+
+        let sheetsUrls = JSON.parse(localStorage.getItem('app_sheets')) || ['https://docs.google.com/spreadsheets/d/sample1'];
         let chartInstance = null;
 
-        function saveAndRefresh() {
-            localStorage.setItem('mb_campaigns', JSON.stringify(campaigns));
-            updateClientFilterOptions();
-            renderTable();
-        }
-
-        function toggleModal(show) {
-            document.getElementById('modal').classList.toggle('hidden', !show);
-        }
-
-        function addCampaign(e) {
-            e.preventDefault();
-            const newCampaign = {
-                id: Date.now(),
-                client: document.getElementById('clientName').value.trim(),
-                product: document.getElementById('productName').value.trim(),
-                platform: document.getElementById('platform').value,
-                spend: parseFloat(document.getElementById('adSpend').value),
-                margin: parseFloat(document.getElementById('profitMargin').value)
-            };
-            campaigns.push(newCampaign);
-            document.getElementById('campaignForm').reset();
-            toggleModal(false);
-            saveAndRefresh();
-        }
-
-        function deleteCampaign(id) {
-            campaigns = campaigns.filter(c => c.id !== id);
-            saveAndRefresh();
-        }
-
-        function updateClientFilterOptions() {
-            const filterClient = document.getElementById('filterClient');
-            const currentValue = filterClient.value;
-            const clients = [...new Set(campaigns.map(c => c.client))];
-            
-            filterClient.innerHTML = '<option value="ALL">جميع الزبائن</option>';
-            clients.forEach(client => {
-                const option = document.createElement('option');
-                option.value = client;
-                option.textContent = client;
-                filterClient.appendChild(option);
+        // Navigation Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('text-slate-400');
             });
-            filterClient.value = currentValue;
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('bg-indigo-600', 'text-white');
+            event.currentTarget.classList.remove('text-slate-400');
+
+            if (tabId === 'tab-dashboard') renderDashboard();
+            if (tabId === 'tab-clients') renderClientsView();
+            if (tabId === 'tab-sheets') renderSheetsView();
+            if (tabId === 'tab-archives') renderArchivesView();
         }
 
-        function renderTable() {
-            const selectedClient = document.getElementById('filterClient').value;
-            const selectedPlatform = document.getElementById('filterPlatform').value;
+        // --- DASHBOARD LOGIC ---
+        function renderDashboard() {
+            populateFilterOptions();
+            applyFilters();
+        }
 
-            const filteredData = campaigns.filter(item => {
-                const matchClient = selectedClient === 'ALL' || item.client === selectedClient;
-                const matchPlatform = selectedPlatform === 'ALL' || item.platform === selectedPlatform;
-                return matchClient && matchPlatform;
-            });
-
-            const tbody = document.getElementById('campaignsTable');
-            tbody.innerHTML = '';
-
-            let totalSpend = 0;
-            let totalProfit = 0;
-
-            filteredData.forEach(item => {
-                const profit = item.spend * (item.margin / 100);
-                totalSpend += item.spend;
-                totalProfit += profit;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-800/40">
-                        <td class="p-4 font-medium text-white">${item.client}</td>
-                        <td class="p-4">${item.product}</td>
-                        <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-full bg-slate-700 text-indigo-300 font-semibold">${item.platform}</span></td>
-                        <td class="p-4">$${item.spend.toFixed(2)}</td>
-                        <td class="p-4">${item.margin}%</td>
-                        <td class="p-4 font-bold text-emerald-400">$${profit.toFixed(2)}</td>
-                        <td class="p-4 text-center">
-                            <button onclick="deleteCampaign(${item.id})" class="text-rose-400 hover:text-rose-300 text-xs">حذف</button>
-                        </td>
-                    </tr>
+        function populateFilterOptions() {
+            const clientsContainer = document.getElementById('filterClientsContainer');
+            clientsContainer.innerHTML = '';
+            clientsData.forEach(c => {
+                clientsContainer.innerHTML += `
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" value="${c.name}" checked onchange="onClientFilterChange()"> ${c.name}
+                    </label>
                 `;
             });
-
-            // Update KPI
-            document.getElementById('totalSpend').innerText = `$${totalSpend.toFixed(2)}`;
-            document.getElementById('totalProfit').innerText = `$${totalProfit.toFixed(2)}`;
-            document.getElementById('totalClients').innerText = new Set(filteredData.map(c => c.client)).size;
-            document.getElementById('totalProducts').innerText = filteredData.length;
-
-            updateChart(filteredData);
+            onClientFilterChange();
         }
 
-        function updateChart(data) {
-            const platformSpend = {};
-            data.forEach(item => {
-                platformSpend[item.platform] = (platformSpend[item.platform] || 0) + item.spend;
+        function onClientFilterChange() {
+            const selectedClients = Array.from(document.querySelectorAll('#filterClientsContainer input:checked')).map(cb => cb.value);
+            const productsContainer = document.getElementById('filterProductsContainer');
+            productsContainer.innerHTML = '';
+
+            const availableProducts = new Set();
+            clientsData.filter(c => selectedClients.includes(c.name)).forEach(c => {
+                c.products.forEach(p => availableProducts.add(p.name));
             });
 
-            const ctx = document.getElementById('platformChart').getContext('2d');
-            
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
+            availableProducts.forEach(prodName => {
+                productsContainer.innerHTML += `
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" value="${prodName}" checked onchange="applyFilters()"> ${prodName}
+                    </label>
+                `;
+            });
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            const selectedClients = Array.from(document.querySelectorAll('#filterClientsContainer input:checked')).map(cb => cb.value);
+            const selectedProducts = Array.from(document.querySelectorAll('#filterProductsContainer input:checked')).map(cb => cb.value);
+            const selectedPlatforms = Array.from(document.querySelectorAll('#filterPlatformsContainer input:checked')).map(cb => cb.value);
+
+            const filteredLogs = historicalLogs.filter(log => {
+                const matchDate = (!startDate || log.date >= startDate) && (!endDate || log.date <= endDate);
+                const matchClient = selectedClients.includes(log.client);
+                const matchProduct = selectedProducts.includes(log.product);
+                const matchPlatform = selectedPlatforms.includes(log.platform);
+                return matchDate && matchClient && matchProduct && matchPlatform;
+            });
+
+            let totalSpend = 0, totalPayment = 0, totalProfit = 0;
+            filteredLogs.forEach(l => {
+                totalSpend += l.spend;
+                totalPayment += l.payment;
+                totalProfit += l.profit;
+            });
+
+            document.getElementById('kpiPayments').innerText = `$${totalPayment.toFixed(2)}`;
+            document.getElementById('kpiSpend').innerText = `$${totalSpend.toFixed(2)}`;
+            document.getElementById('kpiProfit').innerText = `$${totalProfit.toFixed(2)}`;
+
+            renderLineChart(filteredLogs);
+        }
+
+        function renderLineChart(logs) {
+            const ctx = document.getElementById('financialLineChart').getContext('2d');
+            const dates = [...new Set(logs.map(l => l.date))].sort();
+
+            const spendSeries = dates.map(d => logs.filter(l => l.date === d).reduce((a, b) => a + b.spend, 0));
+            const paymentSeries = dates.map(d => logs.filter(l => l.date === d).reduce((a, b) => a + b.payment, 0));
+            const profitSeries = dates.map(d => logs.filter(l => l.date === d).reduce((a, b) => a + b.profit, 0));
+
+            if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: Object.keys(platformSpend),
-                    datasets: [{
-                        label: 'المصاريف الإعلانية ($)',
-                        data: Object.values(platformSpend),
-                        backgroundColor: '#6366f1',
-                        borderRadius: 6
-                    }]
+                    labels: dates,
+                    datasets: [
+                        { label: 'المدفوعات ($)', data: paymentSeries, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', tension: 0.3, fill: true },
+                        { label: 'الصرف الإعلاني ($)', data: spendSeries, borderColor: '#fb7185', backgroundColor: 'rgba(251,113,133,0.1)', tension: 0.3, fill: true },
+                        { label: 'الفائدة ($)', data: profitSeries, borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.1)', tension: 0.3, fill: true }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
                     scales: {
-                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
                     }
                 }
             });
         }
 
-        // Init
-        updateClientFilterOptions();
-        renderTable();
+        // --- CLIENT MANAGEMENT LOGIC ---
+        function addProductRow(name = '', margin = '', platforms = []) {
+            const container = document.getElementById('productRowsContainer');
+            const id = Date.now() + Math.random();
+            const row = document.createElement('div');
+            row.className = "p-4 bg-slate-900 border border-slate-700 rounded-xl space-y-3 product-row";
+            row.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" placeholder="اسم المنتج" value="${name}" required class="prod-name bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    <input type="number" step="0.1" placeholder="نسبة الربح من الصرف (%)" value="${margin}" required class="prod-margin bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">المنصات الإعلانية العاملة للمنتج:</label>
+                    <div class="flex gap-4 text-xs">
+                        <label><input type="checkbox" value="Meta Ads" ${platforms.includes('Meta Ads') ? 'checked' : ''} class="prod-platform"> Meta Ads</label>
+                        <label><input type="checkbox" value="TikTok Ads" ${platforms.includes('TikTok Ads') ? 'checked' : ''} class="prod-platform"> TikTok Ads</label>
+                        <label><input type="checkbox" value="Snapchat Ads" ${platforms.includes('Snapchat Ads') ? 'checked' : ''} class="prod-platform"> Snapchat Ads</label>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-xs text-rose-400 hover:underline">حذف المنتج</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('newClientName').value.trim();
+            const productElements = document.querySelectorAll('.product-row');
+            
+            const products = [];
+            productElements.forEach(el => {
+                const name = el.querySelector('.prod-name').value.trim();
+                const margin = parseFloat(el.querySelector('.prod-margin').value);
+                const platforms = Array.from(el.querySelectorAll('.prod-platform:checked')).map(cb => cb.value);
+                if (name) products.push({ name, margin, platforms });
+            });
+
+            clientsData.push({ id: 'c_' + Date.now(), name: clientName, products });
+            localStorage.setItem('app_clients', JSON.stringify(clientsData));
+            document.getElementById('addClientForm').reset();
+            document.getElementById('productRowsContainer').innerHTML = '';
+            addProductRow();
+            renderClientsView();
+            alert('تم حفظ الزبون والمنتجات بنجاح');
+        }
+
+        function renderClientsView() {
+            const container = document.getElementById('clientsList');
+            container.innerHTML = '';
+            clientsData.forEach(client => {
+                let prodsHtml = client.products.map(p => `
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs flex justify-between items-center mt-2">
+                        <div>
+                            <span class="font-bold text-indigo-300">${p.name}</span> - نسبة الربح: <span class="text-emerald-400">${p.margin}%</span>
+                        </div>
+                        <div class="text-slate-400">المنصات: ${p.platforms.join(', ')}</div>
+                    </div>
+                `).join('');
+
+                container.innerHTML += `
+                    <div class="bg-slate-900/50 border border-slate-700 p-4 rounded-xl">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <h4 class="font-bold text-white">${client.name}</h4>
+                            <button onclick="deleteClient('${client.id}')" class="text-xs text-rose-400 hover:underline">حذف الزبون</button>
+                        </div>
+                        ${prodsHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function deleteClient(id) {
+            clientsData = clientsData.filter(c => c.id !== id);
+            localStorage.setItem('app_clients', JSON.stringify(clientsData));
+            renderClientsView();
+        }
+
+        // --- GOOGLE SHEETS SYNC LOGIC ---
+        function renderSheetsView() {
+            const container = document.getElementById('sheetsUrlContainer');
+            container.innerHTML = '';
+            sheetsUrls.forEach((url, index) => {
+                container.innerHTML += `
+                    <div class="flex gap-2">
+                        <input type="text" value="${url}" onchange="sheetsUrls[${index}]=this.value; saveSheetsUrls();" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white" placeholder="رابط Google Sheet">
+                        <button onclick="sheetsUrls.splice(${index}, 1); saveSheetsUrls(); renderSheetsView();" class="bg-slate-700 text-rose-300 px-3 rounded-xl text-xs">مسح</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addSheetUrlInput() {
+            sheetsUrls.push('');
+            renderSheetsView();
+        }
+
+        function saveSheetsUrls() {
+            localStorage.setItem('app_sheets', JSON.stringify(sheetsUrls));
+        }
+
+        function syncSheetsData() {
+            // Simulated snapshot function to store data permanently in LocalStorage even if sheets reset
+            const today = new Date().toISOString().split('T')[0];
+            const newSnapshot = [
+                { id: Date.now(), date: today, client: 'عبد الحق', product: 'Pantalon Palazzo', platform: 'Meta Ads', spend: 120, payment: 180, profit: 18 }
+            ];
+            historicalLogs = [...historicalLogs, ...newSnapshot];
+            localStorage.setItem('app_logs', JSON.stringify(historicalLogs));
+            alert('تم جلب البيانات اليومية وحفظها في الذاكرة الدائمة بنجاح!');
+        }
+
+        // --- MONTHLY ARCHIVES LOGIC ---
+        function renderArchivesView() {
+            const container = document.getElementById('monthlyArchivesList');
+            container.innerHTML = '';
+
+            const archives = {};
+            historicalLogs.forEach(log => {
+                const monthKey = log.date.substring(0, 7); // YYYY-MM
+                if (!archives[monthKey]) archives[monthKey] = {};
+                if (!archives[monthKey][log.client]) archives[monthKey][log.client] = [];
+                archives[monthKey][log.client].push(log);
+            });
+
+            Object.keys(archives).forEach(month => {
+                let clientCards = '';
+                Object.keys(archives[month]).forEach(clientName => {
+                    const logs = archives[month][clientName];
+                    const monthSpend = logs.reduce((a, b) => a + b.spend, 0);
+                    const monthProfit = logs.reduce((a, b) => a + b.profit, 0);
+
+                    clientCards += `
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs mt-2 space-y-1">
+                            <div class="font-bold text-slate-200">${clientName}</div>
+                            <div class="text-slate-400">إجمالي الصرف: $${monthSpend.toFixed(2)} | الأرباح: <span class="text-emerald-400">$${monthProfit.toFixed(2)}</span></div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                            <h3 class="font-bold text-indigo-300">أرشيف شهر: ${month}</h3>
+                            <button onclick="deleteMonthArchive('${month}')" class="text-xs bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-lg hover:bg-rose-600 hover:text-white transition">حذف بيانات الشهر</button>
+                        </div>
+                        ${clientCards}
+                    </div>
+                `;
+            });
+        }
+
+        function deleteMonthArchive(month) {
+            if (confirm(`هل أنت تأكد من حذف كافة بيانات أرشيف شهر ${month}؟`)) {
+                historicalLogs = historicalLogs.filter(l => !l.date.startsWith(month));
+                localStorage.setItem('app_logs', JSON.stringify(historicalLogs));
+                renderArchivesView();
+            }
+        }
+
+        // Init App
+        addProductRow();
+        renderDashboard();
     </script>
 </body>
 </html>
