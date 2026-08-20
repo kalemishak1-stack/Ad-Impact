@@ -870,29 +870,59 @@
             renderClientsView();
         }
 
-        function renderClientsView() {
-            const list = document.getElementById('clientsCardsList');
-            list.innerHTML = '';
-            clients.forEach(cli => {
-                const prodsList = cli.products.map(p => `
-                    <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 text-xs flex justify-between items-center mt-2">
-                        <span class="font-bold text-indigo-300">${p.name}</span>
-                        <div class="text-slate-400">عمولة: <span class="text-emerald-400 font-bold">${p.margin}%</span> | كاشباك: <span class="text-sky-400 font-bold">${p.cashback}%</span></div>
+      // 1. دالة إعادة رسم القائمة مع تحويل النسب إلى حقول إدخال وسهلة التعديل
+function renderClientsList() {
+    const container = document.getElementById('clientsContainer'); // استبدله بـ ID الحاوية لديك
+    
+    container.innerHTML = clients.map((client, clientIndex) => `
+        <div class="client-card">
+            <div class="client-header">
+                <strong>${client.name}</strong>
+                <button onclick="deleteClient(${clientIndex})" class="text-red">حذف الزبون</button>
+            </div>
+            
+            ${client.products.map((prod, prodIndex) => `
+                <div class="product-row">
+                    <span class="prod-title">${prod.name}</span>
+                    
+                    <div class="inputs-group">
+                        <label>عمولة %: 
+                            <input type="number" id="profit-${clientIndex}-${prodIndex}" value="${prod.profit}" class="edit-input" />
+                        </label>
+                        
+                        <label>كاشباك %: 
+                            <input type="number" id="cashback-${clientIndex}-${prodIndex}" value="${prod.cashback}" class="edit-input" />
+                        </label>
+                        
+                        <button onclick="updateProductRates(${clientIndex}, ${prodIndex})" class="btn-update">
+                            حفظ التعديل
+                        </button>
                     </div>
-                `).join('');
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
 
-                list.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl">
-                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                            <h4 class="font-bold text-white">${cli.name}</h4>
-                            <button onclick="deleteClient('${cli.id}')" class="text-xs text-rose-400 hover:underline">حذف الزبون</button>
-                        </div>
-                        ${prodsList}
-                    </div>
-                `;
-            });
-        }
+// 2. دالة حفظ النسب الجديدة في مصفوفة البيانات وقاعدة البيانات/localStorage
+function updateProductRates(clientIndex, prodIndex) {
+    const newProfit = parseFloat(document.getElementById(`profit-${clientIndex}-${prodIndex}`).value) || 0;
+    const newCashback = parseFloat(document.getElementById(`cashback-${clientIndex}-${prodIndex}`).value) || 0;
 
+    // تحديث القيم داخل المصفوفة الرئيسية
+    clients[clientIndex].products[prodIndex].profit = newProfit;
+    clients[clientIndex].products[prodIndex].cashback = newCashback;
+
+    // حفظ في الـ LocalStorage أو إرسال للتحديث في قاعدة البيانات
+    if (typeof saveToDatabase === 'function') {
+        saveToDatabase(clients);
+    } else {
+        localStorage.setItem('clientsData', JSON.stringify(clients));
+    }
+
+    alert('تم تحديث نسبة الربح والكاشباك بنجاح!');
+    renderClientsList(); // إعادة تحديث القائمة
+}
         function deleteClient(id) {
             clients = clients.filter(c => c.id !== id);
             saveAllState();
