@@ -48,8 +48,8 @@
             </div>
 
             <div class="text-xs text-slate-500 pt-6 border-t border-slate-800 space-y-1">
-                <div>نظام الحفظ الذاتي: <span class="text-emerald-400 font-bold">مفعل</span></div>
-                <div>بدون الحاجة لـ Google Sheets</div>
+                <div>نظام الحفظ الذاتي: <span class="text-emerald-400 font-bold">مفعل تلقائياً</span></div>
+                <div>تاريخ اليوم محدد تلقائياً</div>
             </div>
         </aside>
 
@@ -67,10 +67,13 @@
 
                 <!-- Multi-Filter Bar -->
                 <div class="bg-slate-800/90 border border-slate-700/80 p-5 rounded-2xl space-y-4 shadow-xl">
-                    <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">الفلاتر المتقدمة (اختيار متعدد)</h3>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">الفلاتر المتقدمة</h3>
+                        <button onclick="resetFilters()" class="text-xs text-indigo-400 hover:underline">إعادة ضبط الفلاتر</button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-xs text-slate-400 mb-1">من تاريخ / إلى تاريخ</label>
+                            <label class="block text-xs text-slate-400 mb-1">من تاريخ / إلى تاريخ (اختياري)</label>
                             <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
                             <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white mt-1">
                         </div>
@@ -105,7 +108,7 @@
                         <h3 id="kpiTotalSpend" class="text-2xl font-bold text-rose-400 mt-1">$0.00</h3>
                     </div>
                     <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl">
-                        <span class="text-slate-400 text-xs">إجمالي أرباحك (العمولات)</span>
+                        <span class="text-slate-400 text-xs">إجمالي أرباحك (المحسوبة تاريخياً)</span>
                         <h3 id="kpiTotalProfit" class="text-2xl font-bold text-emerald-400 mt-1">$0.00</h3>
                     </div>
                     <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl">
@@ -116,7 +119,7 @@
 
                 <!-- Interactive Financial Chart -->
                 <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-xl">
-                    <h3 class="text-sm font-bold text-slate-200 mb-4">المنحنى البياني المالي (المدفوعات vs الصرف vs الفائدة)</h3>
+                    <h3 class="text-sm font-bold text-slate-200 mb-4">المنحنى البياني المالي (المدفوعات vs الصرف)</h3>
                     <div class="h-80">
                         <canvas id="mainFinanceChart"></canvas>
                     </div>
@@ -147,16 +150,13 @@
 
             <!-- 2. TAB: PAYMENTS & BUDGET ALLOCATION -->
             <section id="tab-payments" class="tab-content space-y-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white">شحن الميزانيات ومدفوعات الزبائن</h2>
-                        <p class="text-slate-400 text-xs mt-1">تسجيل الأموال المستلمة وتخصيصها لمنتجات الزبون مع تواريخ الدفع</p>
-                    </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white">شحن الميزانيات ومدفوعات الزبائن</h2>
+                    <p class="text-slate-400 text-xs mt-1">تحديد الزبون وتوزيع الميزانية على منتج واحد أو عدة منتجات</p>
                 </div>
 
-                <!-- Payment Form -->
                 <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl max-w-2xl">
-                    <h3 class="text-sm font-bold text-indigo-300 mb-4">تسجيل دفعة جديدة من زبون</h3>
+                    <h3 class="text-sm font-bold text-indigo-300 mb-4">تسجيل دفعة جديدة وتوزيعها على المنتجات</h3>
                     <form onsubmit="addPaymentRecord(event)" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -166,21 +166,15 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-300 mb-1">تخصيص الدفعة لمنتج معين</label>
-                                <select id="payProductSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    <option value="">-- اختر المنتج --</option>
-                                </select>
+                                <label class="block text-xs text-slate-300 mb-1">تاريخ استلام الدفعة</label>
+                                <input type="date" id="payDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">المبلغ المدفوع ($)</label>
-                                <input type="number" step="0.01" id="payAmount" required placeholder="مثال: 500" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">تاريخ استلام الدفعة</label>
-                                <input type="date" id="payDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">حدد المنتجات والمبلغ المخصص لكل منتج ($)</label>
+                            <div id="payProductsAllocationContainer" class="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-2">
+                                <span class="text-xs text-slate-500">اختر زبوناً أولاً لعرض منتجاته</span>
                             </div>
                         </div>
 
@@ -195,7 +189,6 @@
                     </form>
                 </div>
 
-                <!-- Payments History Table -->
                 <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden">
                     <div class="p-5 border-b border-slate-700/60"><h3 class="text-sm font-bold text-white">سجل المقبوضات التاريخي</h3></div>
                     <div class="overflow-x-auto">
@@ -216,32 +209,23 @@
                 </div>
             </section>
 
-            <!-- 3. TAB: DAILY SPEND LOGGER -->
+            <!-- 3. TAB: DAILY SPEND LOGGER (UPDATED) -->
             <section id="tab-daily-spend" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-white">تسجيل الصرف الإعلاني اليومي</h2>
-                    <p class="text-slate-400 text-xs mt-1">تحديث المبالغ المصروفة إعلانياً لكل منتج ومنصة يدوياً وبسرعة</p>
+                    <p class="text-slate-400 text-xs mt-1">يتم تحديد تاريخ اليوم تلقائياً مع تجميد نسبة الأرباح الخاصة بكل تاريخ بشكل مستقل</p>
                 </div>
 
                 <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl max-w-2xl">
                     <h3 class="text-sm font-bold text-rose-300 mb-4">إضافة صرف إعلاني جديد</h3>
-                    <form onsubmit="addSpendRecord(event)" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onsubmit="addSpendRecordMulti(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-300 mb-1">الزبون</label>
-                                <select id="spClientSelect" onchange="updateSpProductDropdown()" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                                <select id="spClientSelect" onchange="updateSpProductsContainer()" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                                     <option value="">-- اختر زبوناً --</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">المنتج</label>
-                                <select id="spProductSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    <option value="">-- اختر المنتج --</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs text-slate-300 mb-1">المنصة الإعلانية</label>
                                 <select id="spPlatform" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
@@ -252,24 +236,26 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-300 mb-1">المبلغ المصروف ($)</label>
-                                <input type="number" step="0.01" id="spAmount" required placeholder="مثال: 80.50" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                                <label class="block text-xs text-slate-300 mb-1">تاريخ الصرف (تلقائي اليوم)</label>
+                                <input type="date" id="spDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white border-amber-500/50">
                             </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">تاريخ الصرف</label>
-                                <input type="date" id="spDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">حدد المبلغ المصروف لكل منتج ($)</label>
+                            <div id="spProductsContainer" class="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-2">
+                                <span class="text-xs text-slate-500">اختر زبوناً أولاً لعرض منتجاته</span>
                             </div>
                         </div>
 
                         <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-rose-600/30">
-                            + تسجيل الصرف واحتساب العمولة تلقائياً
+                            + تسجيل الصرف وحفظ العمولات لهذا التاريخ
                         </button>
                     </form>
                 </div>
 
-                <!-- Spend Log Table -->
                 <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden">
-                    <div class="p-5 border-b border-slate-700/60"><h3 class="text-sm font-bold text-white">سجل الصرف الإعلاني اليومي</h3></div>
+                    <div class="p-5 border-b border-slate-700/60"><h3 class="text-sm font-bold text-white">سجل الصرف الإعلاني اليومي والعمولات المسجلة</h3></div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-xs text-slate-300">
                             <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-700">
@@ -279,7 +265,8 @@
                                     <th class="p-4">المنتج</th>
                                     <th class="p-4">المنصة</th>
                                     <th class="p-4">الصرف ($)</th>
-                                    <th class="p-4">أرباحك المحسوبة ($)</th>
+                                    <th class="p-4">النسبة المطبقة (%)</th>
+                                    <th class="p-4">أرباحك ($)</th>
                                     <th class="p-4 text-center">إجراءات</th>
                                 </tr>
                             </thead>
@@ -293,7 +280,7 @@
             <section id="tab-clients" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-white">إدارة قاعدة الزبائن والمنتجات والعمولات</h2>
-                    <p class="text-slate-400 text-xs mt-1">إضافة زبائن جدد، ربط منتجاتهم وتحديد نسب الأرباح والكاشباك لكل منتوج</p>
+                    <p class="text-slate-400 text-xs mt-1">تحديث النسب هنا ينطبق على العمليات المستقبلية تلقائياً دون تغيير الأرباح القديمة</p>
                 </div>
 
                 <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl max-w-2xl space-y-4">
@@ -306,7 +293,7 @@
 
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <label class="text-xs font-bold text-slate-300">منتجات الزبون ونسب عمولتك</label>
+                                <label class="text-xs font-bold text-slate-300">منتجات الزبون ونسب عمولتك الافتراضية</label>
                                 <button type="button" onclick="addProductInputRow()" class="bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white px-3 py-1 rounded-lg text-xs font-bold transition">+ إضافة منتوج آخر</button>
                             </div>
                             <div id="productInputsContainer" class="space-y-3"></div>
@@ -316,7 +303,6 @@
                     </form>
                 </div>
 
-                <!-- Saved Clients List -->
                 <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl">
                     <h3 class="text-sm font-bold text-white mb-4">قائمة الزبائن والمنتجات المسجلة حالياً</h3>
                     <div id="clientsCardsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -345,9 +331,9 @@
             </div>
             <div class="space-y-2 text-xs">
                 <div class="flex justify-between"><span>الزبون:</span><span id="rcpClient" class="font-bold"></span></div>
-                <div class="flex justify-between"><span>المنتج المخصص:</span><span id="rcpProduct" class="font-bold"></span></div>
+                <div class="flex justify-between"><span>تفاصيل المنتجات:</span><span id="rcpProduct" class="font-bold"></span></div>
                 <div class="flex justify-between"><span>تاريخ الاستلام:</span><span id="rcpDate" class="font-bold"></span></div>
-                <div class="flex justify-between border-t border-b py-2 my-2 text-sm"><span>المبلغ المستلم:</span><span id="rcpAmount" class="font-bold text-indigo-600"></span></div>
+                <div class="flex justify-between border-t border-b py-2 my-2 text-sm"><span>إجمالي المبلغ المستلم:</span><span id="rcpAmount" class="font-bold text-indigo-600"></span></div>
                 <div class="flex justify-between"><span>ملاحظات:</span><span id="rcpNote"></span></div>
             </div>
             <div class="pt-4 flex gap-2">
@@ -357,30 +343,70 @@
         </div>
     </div>
 
+    <!-- Edit Spend Modal -->
+    <div id="editSpendModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-lg font-bold text-indigo-400">تعديل سجل الصرف ونسبة الأرباح</h3>
+            <form onsubmit="saveEditedSpend(event)" class="space-y-3">
+                <input type="hidden" id="editSpId">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">تاريخ الصرف</label>
+                    <input type="date" id="editSpDate" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">المنصة الإعلانية</label>
+                    <select id="editSpPlatform" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <option value="Meta Ads">Meta Ads</option>
+                        <option value="TikTok Ads">TikTok Ads</option>
+                        <option value="Snapchat Ads">Snapchat Ads</option>
+                        <option value="Google Ads">Google Ads</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">المبلغ المصروف ($)</label>
+                    <input type="number" step="0.01" id="editSpAmount" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">نسبة أرباحك (%)</label>
+                        <input type="number" step="0.1" id="editSpMargin" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">نسبة الكاشباك (%)</label>
+                        <input type="number" step="0.1" id="editSpCashback" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold">
+                    </div>
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition">حفظ التعديلات</button>
+                    <button type="button" onclick="closeEditSpendModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Data Structures stored in LocalStorage
-        let clients = JSON.parse(localStorage.getItem('app_v2_clients')) || [
+        let clients = JSON.parse(localStorage.getItem('app_v3_clients')) || [
             {
                 id: 'c1',
-                name: 'عبد الحق',
+                name: 'Abdlhak',
                 products: [
-                    { name: 'Pantalon Palazzo', margin: 15, cashback: 2 },
-                    { name: 'بيجامة نسائية', margin: 20, cashback: 0 }
+                    { name: 'Baggy', margin: 15, cashback: 2 },
+                    { name: 'Short', margin: 15, cashback: 0 }
                 ]
             }
         ];
 
-        let payments = JSON.parse(localStorage.getItem('app_v2_payments')) || [
-            { id: 101, clientId: 'c1', clientName: 'عبد الحق', productName: 'Pantalon Palazzo', amount: 500, date: '2026-08-15', note: 'تحويل CCP' }
-        ];
-
-        let spends = JSON.parse(localStorage.getItem('app_v2_spends')) || [
-            { id: 201, clientId: 'c1', clientName: 'عبد الحق', productName: 'Pantalon Palazzo', platform: 'Meta Ads', amount: 150, date: '2026-08-18' }
-        ];
+        let payments = JSON.parse(localStorage.getItem('app_v3_payments')) || [];
+        let spends = JSON.parse(localStorage.getItem('app_v3_spends')) || [];
 
         let chartInstance = null;
 
-        // Navigation Switcher
+        function saveAllState() {
+            localStorage.setItem('app_v3_clients', JSON.stringify(clients));
+            localStorage.setItem('app_v3_payments', JSON.stringify(payments));
+            localStorage.setItem('app_v3_spends', JSON.stringify(spends));
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -396,6 +422,23 @@
             if (tabId === 'tab-daily-spend') renderSpendsView();
             if (tabId === 'tab-clients') renderClientsView();
             if (tabId === 'tab-archives') renderArchivesView();
+        }
+
+        // --- PROFIT CALCULATION HELPER ---
+        function getSpendProfit(s) {
+            let m = s.margin;
+            let c = s.cashback;
+            if (m === undefined || c === undefined) {
+                const cli = clients.find(cl => cl.name === s.clientName);
+                if (cli) {
+                    const prod = cli.products.find(p => p.name === s.productName);
+                    if (prod) {
+                        m = prod.margin || 0;
+                        c = prod.cashback || 0;
+                    }
+                }
+            }
+            return s.amount * (((m || 0) + (c || 0)) / 100);
         }
 
         // --- DASHBOARD LOGIC ---
@@ -427,6 +470,12 @@
             applyFilters();
         }
 
+        function resetFilters() {
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            populateDashboardFilters();
+        }
+
         function applyFilters() {
             const startDate = document.getElementById('filterStartDate').value;
             const endDate = document.getElementById('filterEndDate').value;
@@ -434,32 +483,27 @@
             const selectedProducts = Array.from(document.querySelectorAll('#filterProductsBox input:checked')).map(cb => cb.value);
             const selectedPlatforms = Array.from(document.querySelectorAll('#filterPlatformsBox input:checked')).map(cb => cb.value);
 
-            // Filtered Payments
             const filteredPayments = payments.filter(p => {
                 const matchDate = (!startDate || p.date >= startDate) && (!endDate || p.date <= endDate);
-                return matchDate && selectedClients.includes(p.clientName) && selectedProducts.includes(p.productName);
+                const matchClient = selectedClients.length === 0 || selectedClients.includes(p.clientName);
+                const matchProd = selectedProducts.length === 0 || selectedProducts.includes(p.productName);
+                return matchDate && matchClient && matchProd;
             });
 
-            // Filtered Spends
             const filteredSpends = spends.filter(s => {
                 const matchDate = (!startDate || s.date >= startDate) && (!endDate || s.date <= endDate);
-                return matchDate && selectedClients.includes(s.clientName) && selectedProducts.includes(s.productName) && selectedPlatforms.includes(s.platform);
+                const matchClient = selectedClients.length === 0 || selectedClients.includes(s.clientName);
+                const matchProd = selectedProducts.length === 0 || selectedProducts.includes(s.productName);
+                const matchPlatform = selectedPlatforms.length === 0 || selectedPlatforms.includes(s.platform);
+                return matchDate && matchClient && matchProd && matchPlatform;
             });
 
             const totalPayments = filteredPayments.reduce((acc, curr) => acc + curr.amount, 0);
             const totalSpend = filteredSpends.reduce((acc, curr) => acc + curr.amount, 0);
 
-            // Calculate profit (Ad spend * Margin% + Cashback%)
             let totalProfit = 0;
             filteredSpends.forEach(s => {
-                const cli = clients.find(c => c.name === s.clientName);
-                if (cli) {
-                    const prod = cli.products.find(p => p.name === s.productName);
-                    if (prod) {
-                        const totalRate = (prod.margin || 0) + (prod.cashback || 0);
-                        totalProfit += s.amount * (totalRate / 100);
-                    }
-                }
+                totalProfit += getSpendProfit(s);
             });
 
             document.getElementById('kpiTotalPayments').innerText = `$${totalPayments.toFixed(2)}`;
@@ -483,10 +527,10 @@
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates,
+                    labels: dates.length > 0 ? dates : ['لا توجد بيانات بعد'],
                     datasets: [
-                        { label: 'المدفوعات ($)', data: payData, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', tension: 0.3, fill: true },
-                        { label: 'الصرف الإعلاني ($)', data: spendData, borderColor: '#fb7185', backgroundColor: 'rgba(251,113,133,0.1)', tension: 0.3, fill: true }
+                        { label: 'المدفوعات ($)', data: payData.length > 0 ? payData : [0], borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', tension: 0.3, fill: true },
+                        { label: 'الصرف الإعلاني ($)', data: spendData.length > 0 ? spendData : [0], borderColor: '#fb7185', backgroundColor: 'rgba(251,113,133,0.1)', tension: 0.3, fill: true }
                     ]
                 },
                 options: {
@@ -521,7 +565,7 @@
                             <td class="p-4">${prod.name}</td>
                             <td class="p-4 font-semibold text-sky-400">$${totalPay.toFixed(2)}</td>
                             <td class="p-4 font-semibold text-rose-400">$${totalSp.toFixed(2)}</td>
-                            <td class="p-4 font-bold ${remaining < 50 ? 'text-rose-400' : 'text-emerald-400'}">$${remaining.toFixed(2)}</td>
+                            <td class="p-4 font-bold ${remaining < 0 ? 'text-rose-400' : 'text-emerald-400'}">$${remaining.toFixed(2)}</td>
                             <td class="p-4">${alertBadge}</td>
                         </tr>
                     `;
@@ -529,22 +573,39 @@
             });
         }
 
-        // --- PAYMENTS & ALLOCATION LOGIC ---
+        // --- PAYMENTS LOGIC ---
         function renderPaymentsView() {
             const select = document.getElementById('payClientSelect');
             select.innerHTML = '<option value="">-- اختر زبوناً --</option>';
             clients.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
             document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+            updatePayProductDropdown();
             renderPaymentsHistoryTable();
         }
 
         function updatePayProductDropdown() {
             const clientId = document.getElementById('payClientSelect').value;
-            const prodSelect = document.getElementById('payProductSelect');
-            prodSelect.innerHTML = '<option value="">-- اختر المنتج --</option>';
+            const container = document.getElementById('payProductsAllocationContainer');
+            container.innerHTML = '';
+            
             const cli = clients.find(c => c.id === clientId);
-            if (cli) {
-                cli.products.forEach(p => prodSelect.innerHTML += `<option value="${p.name}">${p.name}</option>`);
+            if (cli && cli.products.length > 0) {
+                cli.products.forEach(p => {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between gap-3 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                            <label class="flex items-center gap-2.5 text-xs text-white cursor-pointer select-none">
+                                <input type="checkbox" checked class="pay-prod-check rounded border-slate-600 text-indigo-600 focus:ring-0" data-prod="${p.name}">
+                                <span class="font-bold text-indigo-300">${p.name}</span>
+                            </label>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-slate-400 font-bold">$</span>
+                                <input type="number" step="0.01" placeholder="المبلغ" data-prod="${p.name}" class="pay-prod-amt bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white w-32 font-semibold">
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<span class="text-xs text-slate-500">اختر زبوناً لعرض منتجاته</span>';
             }
         }
 
@@ -552,16 +613,44 @@
             e.preventDefault();
             const clientId = document.getElementById('payClientSelect').value;
             const cli = clients.find(c => c.id === clientId);
-            const productName = document.getElementById('payProductSelect').value;
-            const amount = parseFloat(document.getElementById('payAmount').value);
             const date = document.getElementById('payDate').value;
             const note = document.getElementById('payNote').value;
 
-            const record = { id: Date.now(), clientId, clientName: cli.name, productName, amount, date, note };
-            payments.push(record);
-            localStorage.setItem('app_v2_payments', JSON.stringify(payments));
+            const checkRows = document.querySelectorAll('.pay-prod-check');
+            let addedCount = 0;
+            let summaryProducts = [];
+            let totalAddedAmount = 0;
 
-            showReceiptModal(record);
+            checkRows.forEach(cb => {
+                if (cb.checked) {
+                    const prodName = cb.getAttribute('data-prod');
+                    const amtInput = document.querySelector(`.pay-prod-amt[data-prod="${prodName}"]`);
+                    const amount = parseFloat(amtInput.value) || 0;
+
+                    if (amount > 0) {
+                        payments.push({ id: Date.now() + Math.floor(Math.random()*1000), clientId, clientName: cli.name, productName: prodName, amount, date, note });
+                        addedCount++;
+                        totalAddedAmount += amount;
+                        summaryProducts.push(`${prodName} ($${amount})`);
+                    }
+                }
+            });
+
+            if (addedCount === 0) {
+                alert('يرجى كتابة المبلغ المخصص لمنتج واحد على الأقل.');
+                return;
+            }
+
+            saveAllState();
+
+            showReceiptModal({
+                clientName: cli.name,
+                productName: summaryProducts.join('، '),
+                amount: totalAddedAmount,
+                date: date,
+                note: note
+            });
+
             renderPaymentsHistoryTable();
             e.target.reset();
             renderPaymentsView();
@@ -588,7 +677,7 @@
 
         function deletePayment(id) {
             payments = payments.filter(p => p.id !== id);
-            localStorage.setItem('app_v2_payments', JSON.stringify(payments));
+            saveAllState();
             renderPaymentsHistoryTable();
         }
 
@@ -598,33 +687,81 @@
             select.innerHTML = '<option value="">-- اختر زبوناً --</option>';
             clients.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
             document.getElementById('spDate').value = new Date().toISOString().split('T')[0];
+            updateSpProductsContainer();
             renderSpendsHistoryTable();
         }
 
-        function updateSpProductDropdown() {
+        function updateSpProductsContainer() {
             const clientId = document.getElementById('spClientSelect').value;
-            const prodSelect = document.getElementById('spProductSelect');
-            prodSelect.innerHTML = '<option value="">-- اختر المنتج --</option>';
+            const container = document.getElementById('spProductsContainer');
+            container.innerHTML = '';
+
             const cli = clients.find(c => c.id === clientId);
-            if (cli) {
-                cli.products.forEach(p => prodSelect.innerHTML += `<option value="${p.name}">${p.name}</option>`);
+            if (cli && cli.products.length > 0) {
+                cli.products.forEach(p => {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between gap-3 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+                            <label class="flex items-center gap-2.5 text-xs text-white cursor-pointer select-none">
+                                <input type="checkbox" checked class="sp-prod-check rounded border-slate-600 text-rose-600 focus:ring-0" data-prod="${p.name}">
+                                <span class="font-bold text-rose-300">${p.name}</span>
+                                <span class="text-[10px] text-slate-400">(النسبة: ${p.margin + (p.cashback||0)}%)</span>
+                            </label>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-slate-400 font-bold">$</span>
+                                <input type="number" step="0.01" placeholder="المصروف اليوم" data-prod="${p.name}" class="sp-prod-amt bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white w-32 font-semibold">
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<span class="text-xs text-slate-500">اختر زبوناً لعرض منتجاته المسجلة</span>';
             }
         }
 
-        function addSpendRecord(e) {
+        function addSpendRecordMulti(e) {
             e.preventDefault();
             const clientId = document.getElementById('spClientSelect').value;
             const cli = clients.find(c => c.id === clientId);
-            const productName = document.getElementById('spProductSelect').value;
             const platform = document.getElementById('spPlatform').value;
-            const amount = parseFloat(document.getElementById('spAmount').value);
             const date = document.getElementById('spDate').value;
 
-            spends.push({ id: Date.now(), clientId, clientName: cli.name, productName, platform, amount, date });
-            localStorage.setItem('app_v2_spends', JSON.stringify(spends));
+            const checkRows = document.querySelectorAll('.sp-prod-check');
+            let addedCount = 0;
 
+            checkRows.forEach(cb => {
+                if (cb.checked) {
+                    const prodName = cb.getAttribute('data-prod');
+                    const amtInput = document.querySelector(`.sp-prod-amt[data-prod="${prodName}"]`);
+                    const amount = parseFloat(amtInput.value) || 0;
+
+                    if (amount > 0) {
+                        const prodObj = cli ? cli.products.find(p => p.name === prodName) : null;
+                        const margin = prodObj ? (prodObj.margin || 0) : 0;
+                        const cashback = prodObj ? (prodObj.cashback || 0) : 0;
+
+                        spends.push({ 
+                            id: Date.now() + Math.floor(Math.random()*1000), 
+                            clientId, 
+                            clientName: cli.name, 
+                            productName: prodName, 
+                            platform, 
+                            amount, 
+                            date,
+                            margin,
+                            cashback
+                        });
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount === 0) {
+                alert('يرجى أدخال المبلغ المصروف لمنتج واحد على الأقل.');
+                return;
+            }
+
+            saveAllState();
             renderSpendsHistoryTable();
-            e.target.reset();
             renderSpendsView();
         }
 
@@ -632,22 +769,20 @@
             const tbody = document.getElementById('spendsHistoryTable');
             tbody.innerHTML = '';
             spends.slice().reverse().forEach(s => {
-                const cli = clients.find(c => c.name === s.clientName);
-                let profit = 0;
-                if (cli) {
-                    const prod = cli.products.find(p => p.name === s.productName);
-                    if (prod) profit = s.amount * (((prod.margin || 0) + (prod.cashback || 0)) / 100);
-                }
+                const profit = getSpendProfit(s);
+                const appliedRate = (s.margin !== undefined ? s.margin : 0) + (s.cashback !== undefined ? s.cashback : 0);
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-4 text-slate-400">${s.date}</td>
+                        <td class="p-4 text-slate-400 font-semibold">${s.date}</td>
                         <td class="p-4 font-bold text-white">${s.clientName}</td>
                         <td class="p-4 text-indigo-300 font-medium">${s.productName}</td>
                         <td class="p-4"><span class="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-xs font-semibold">${s.platform}</span></td>
                         <td class="p-4 font-bold text-rose-400">$${s.amount.toFixed(2)}</td>
+                        <td class="p-4 font-bold text-indigo-400">${appliedRate}%</td>
                         <td class="p-4 font-bold text-emerald-400">$${profit.toFixed(2)}</td>
-                        <td class="p-4 text-center">
+                        <td class="p-4 text-center space-x-2 space-x-reverse">
+                            <button onclick="openEditSpendModal(${s.id})" class="text-sky-400 hover:underline ml-2">تعديل</button>
                             <button onclick="deleteSpend(${s.id})" class="text-rose-400 hover:underline">حذف</button>
                         </td>
                     </tr>
@@ -655,9 +790,45 @@
             });
         }
 
+        function openEditSpendModal(id) {
+            const s = spends.find(item => item.id === id);
+            if (!s) return;
+
+            document.getElementById('editSpId').value = s.id;
+            document.getElementById('editSpDate').value = s.date;
+            document.getElementById('editSpPlatform').value = s.platform;
+            document.getElementById('editSpAmount').value = s.amount;
+            document.getElementById('editSpMargin').value = s.margin !== undefined ? s.margin : 0;
+            document.getElementById('editSpCashback').value = s.cashback !== undefined ? s.cashback : 0;
+
+            document.getElementById('editSpendModal').classList.remove('hidden');
+        }
+
+        function closeEditSpendModal() {
+            document.getElementById('editSpendModal').classList.add('hidden');
+        }
+
+        function saveEditedSpend(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editSpId').value);
+            const s = spends.find(item => item.id === id);
+
+            if (s) {
+                s.date = document.getElementById('editSpDate').value;
+                s.platform = document.getElementById('editSpPlatform').value;
+                s.amount = parseFloat(document.getElementById('editSpAmount').value) || 0;
+                s.margin = parseFloat(document.getElementById('editSpMargin').value) || 0;
+                s.cashback = parseFloat(document.getElementById('editSpCashback').value) || 0;
+
+                saveAllState();
+                closeEditSpendModal();
+                renderSpendsHistoryTable();
+            }
+        }
+
         function deleteSpend(id) {
             spends = spends.filter(s => s.id !== id);
-            localStorage.setItem('app_v2_spends', JSON.stringify(spends));
+            saveAllState();
             renderSpendsHistoryTable();
         }
 
@@ -691,7 +862,7 @@
             });
 
             clients.push({ id: 'c_' + Date.now(), name, products });
-            localStorage.setItem('app_v2_clients', JSON.stringify(clients));
+            saveAllState();
 
             e.target.reset();
             document.getElementById('productInputsContainer').innerHTML = '';
@@ -724,7 +895,7 @@
 
         function deleteClient(id) {
             clients = clients.filter(c => c.id !== id);
-            localStorage.setItem('app_v2_clients', JSON.stringify(clients));
+            saveAllState();
             renderClientsView();
         }
 
@@ -734,6 +905,11 @@
             grid.innerHTML = '';
 
             const months = [...new Set([...payments.map(p => p.date.substring(0,7)), ...spends.map(s => s.date.substring(0,7))])].sort().reverse();
+
+            if (months.length === 0) {
+                grid.innerHTML = '<div class="text-slate-500 text-xs col-span-3">لا توجد سجلات أرشيفية متوفرة حالياً.</div>';
+                return;
+            }
 
             months.forEach(m => {
                 const mPay = payments.filter(p => p.date.startsWith(m)).reduce((a, b) => a + b.amount, 0);
@@ -755,11 +931,10 @@
         }
 
         function deleteMonthArchive(month) {
-            if (confirm(`هل أنت تأكد من حذف بيانات شهر ${month} نهائياً؟`)) {
+            if (confirm(`هل أنت متأكد من حذف بيانات شهر ${month} نهائياً؟`)) {
                 payments = payments.filter(p => !p.date.startsWith(month));
                 spends = spends.filter(s => !s.date.startsWith(month));
-                localStorage.setItem('app_v2_payments', JSON.stringify(payments));
-                localStorage.setItem('app_v2_spends', JSON.stringify(spends));
+                saveAllState();
                 renderArchivesView();
             }
         }
@@ -778,7 +953,7 @@
             document.getElementById('receiptModal').classList.add('hidden');
         }
 
-        // Init
+        // Initial setup
         addProductInputRow();
         renderDashboard();
     </script>
