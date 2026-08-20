@@ -848,27 +848,47 @@
             container.appendChild(row);
         }
 
-        function saveClientWithProducts(e) {
-            e.preventDefault();
-            const name = document.getElementById('cliName').value.trim();
-            const rows = document.querySelectorAll('.prod-input-row');
-            
-            const products = [];
-            rows.forEach(r => {
-                const pName = r.querySelector('.prod-inp-name').value.trim();
-                const margin = parseFloat(r.querySelector('.prod-inp-margin').value) || 0;
-                const cashback = parseFloat(r.querySelector('.prod-inp-cashback').value) || 0;
-                if (pName) products.push({ name: pName, margin, cashback });
-            });
+        function saveClient(event) {
+    // 1. منع تحديث الصفحة وإخفاء البيانات
+    if (event) event.preventDefault();
 
-            clients.push({ id: 'c_' + Date.now(), name, products });
-            saveAllState();
+    const clientNameInput = document.getElementById('clientName'); // استبدل بـ ID حقل اسم الزبون
+    if (!clientNameInput.value.trim()) {
+        alert('يرجى إدخال اسم الزبون');
+        return;
+    }
 
-            e.target.reset();
-            document.getElementById('productInputsContainer').innerHTML = '';
-            addProductInputRow();
-            renderClientsView();
+    // 2. جلب البيانات القديمة أولاً من LocalStorage
+    let clients = JSON.parse(localStorage.getItem('clientsData')) || [];
+
+    // 3. تجميع بيانات الزبون الجديد
+    const newClient = {
+        name: clientNameInput.value,
+        products: [] // مصفوفة المنتجات التي أدخلتها
+    };
+
+    // قراءة أسطر المنتجات المضافة
+    const productRows = document.querySelectorAll('.product-row-input'); // استبدل بـ class السطر لديك
+    productRows.forEach(row => {
+        const prodName = row.querySelector('.prod-name').value;
+        const profit = parseFloat(row.querySelector('.prod-profit').value) || 0;
+        const cashback = parseFloat(row.querySelector('.prod-cashback').value) || 0;
+
+        if (prodName) {
+            newClient.products.push({ name: prodName, profit: profit, cashback: cashback });
         }
+    });
+
+    // 4. إضافة الزبون الجديد فوق الزبائن القدامى (push وليس استبدال)
+    clients.push(newClient);
+
+    // 5. حفظ القائمة المحدثة
+    localStorage.setItem('clientsData', JSON.stringify(clients));
+
+    // 6. إعادة رسم القائمة وإعادة تعيين الحقول
+    renderClientsList();
+    document.getElementById('clientForm').reset(); // مسح الاستمارة فقط بعد الحفظ
+}
 
       // 1. دالة إعادة رسم القائمة مع تحويل النسب إلى حقول إدخال وسهلة التعديل
 function renderClientsList() {
