@@ -821,6 +821,26 @@ function submitMultiProductSpend() {
   updateDashboardUI();      // دالة تحديث الأرقام والجدول في الواجهة
   alert('تم تسجيل الصرف بنجاح!');
 }
+        // 1. الدالة الجديدة لتعبئة القائمة بالزبائن
+function populateClientsDropdown() {
+    const select = document.getElementById('spClientSelect') || document.getElementById('clientSelect');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- اختر زبوناً --</option>';
+    const clientsList = typeof clients !== 'undefined' ? clients : (typeof registeredClients !== 'undefined' ? registeredClients : []);
+    clientsList.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id || client.name;
+        option.textContent = client.name;
+        select.appendChild(option);
+    });
+}
+
+// 2. دوال التعامل مع المنتجات والصرف متعدد المنتجات (handleClientChange, toggleInput, submitMultiProductSpend)
+
+// 3. قسم التشغيل الأساسي عند فتح الصفحة (Init)
+addProductInputRow();
+populateClientsDropdown(); // لتعبئة قائمة الزبائن فوراً
+renderDashboard();
         // Init
         addProductInputRow();
         renderDashboard();
