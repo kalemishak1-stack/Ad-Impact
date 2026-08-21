@@ -217,55 +217,28 @@
             </section>
 
             <!-- 3. TAB: DAILY SPEND LOGGER -->
-            <section id="tab-daily-spend" class="tab-content space-y-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">تسجيل الصرف الإعلاني اليومي</h2>
-                    <p class="text-slate-400 text-xs mt-1">تحديث المبالغ المصروفة إعلانياً لكل منتج ومنصة يدوياً وبسرعة</p>
-                </div>
+          <div class="card">
+  <h3>تسجيل إضافات الصرف اليومي للمنتجات</h3>
+  
+  <!-- 1. قائمة اختيار الزبون -->
+  <div class="form-group">
+    <label>اختر الزبون:</label>
+    <select id="clientSelect" onchange="handleClientChange()">
+      <option value="">-- اختر زبوناً --</option>
+    </select>
+  </div>
 
-                <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl max-w-2xl">
-                    <h3 class="text-sm font-bold text-rose-300 mb-4">إضافة صرف إعلاني جديد</h3>
-                    <form onsubmit="addSpendRecord(event)" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">الزبون</label>
-                                <select id="spClientSelect" onchange="updateSpProductDropdown()" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    <option value="">-- اختر زبوناً --</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">المنتج</label>
-                                <select id="spProductSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    <option value="">-- اختر المنتج --</option>
-                                </select>
-                            </div>
-                        </div>
+  <!-- 2. قائمة المنتجات (ستظهر تلقائياً هنا) -->
+  <div id="productsListContainer" style="display: none; margin-top: 15px;">
+    <label>حدد المنتجات وأدخل الصرف الفعلي لكل منتج:</label>
+    <div id="productsList" style="margin-top: 10px;"></div>
+  </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">المنصة الإعلانية</label>
-                                <select id="spPlatform" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                                    <option value="Meta Ads">Meta Ads</option>
-                                    <option value="TikTok Ads">TikTok Ads</option>
-                                    <option value="Snapchat Ads">Snapchat Ads</option>
-                                    <option value="Google Ads">Google Ads</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">المبلغ المصروف ($)</label>
-                                <input type="number" step="0.01" id="spAmount" required placeholder="مثال: 80.50" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-300 mb-1">تاريخ الصرف</label>
-                                <input type="date" id="spDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-rose-600/30">
-                            + تسجيل الصرف واحتساب العمولة تلقائياً
-                        </button>
-                    </form>
-                </div>
+  <!-- 3. زر الحفظ -->
+  <button type="button" class="btn-submit" onclick="submitMultiProductSpend()" style="margin-top: 15px;">
+    + تسجيل الصرف واحتساب العمولات
+  </button>
+</div>
 
                 <!-- Spend Log Table -->
                 <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden">
@@ -777,7 +750,77 @@
         function closeReceiptModal() {
             document.getElementById('receiptModal').classList.add('hidden');
         }
+// 1. تحديث قائمة المنتجات عند اختيار زبون
+function handleClientChange() {
+  const clientId = document.getElementById('clientSelect').value;
+  const container = document.getElementById('productsListContainer');
+  const productsList = document.getElementById('productsList');
+  
+  productsList.innerHTML = '';
+  
+  // registeredClients هي مصفوفة الزبائن المسجلة في نظامك
+  const client = registeredClients.find(c => c.id === clientId || c.name === clientId);
+  if (!client || !client.products || !client.products.length) {
+    container.style.display = 'none';
+    return;
+  }
 
+  container.style.display = 'block';
+
+  client.products.forEach(product => {
+    const row = document.createElement('div');
+    row.style.cssText = "display: flex; align-items: center; gap: 10px; margin-bottom: 8px;";
+    row.innerHTML = `
+      <input type="checkbox" class="product-check" data-id="${product.id}" onchange="toggleInput('${product.id}')">
+      <span style="min-width: 120px;">${product.name} (${product.commissionRate}%)</span>
+      <input type="number" step="0.01" id="spend_${product.id}" placeholder="الصرف الفعلي ($)" disabled style="padding: 5px; width: 130px;">
+    `;
+    productsList.appendChild(row);
+  });
+}
+
+// 2. تفعيل حقل المبلغ عند تحديد الصح
+function toggleInput(productId) {
+  const checkbox = document.querySelector(`.product-check[data-id="${productId}"]`);
+  const input = document.getElementById(`spend_${productId}`);
+  input.disabled = !checkbox.checked;
+  if (!checkbox.checked) input.value = '';
+}
+
+// 3. معالجة وتخزين البيانات
+function submitMultiProductSpend() {
+  const clientId = document.getElementById('clientSelect').value;
+  const client = registeredClients.find(c => c.id === clientId || c.name === clientId);
+  if (!client) return alert('يرجى اختيار الزبون أولاً');
+
+  const selectedCheckboxes = document.querySelectorAll('.product-check:checked');
+  if (selectedCheckboxes.length === 0) return alert('يرجى اختيار منتج واحد على الأقل');
+
+  selectedCheckboxes.forEach(cb => {
+    const productId = cb.dataset.id;
+    const product = client.products.find(p => p.id === productId);
+    const spendVal = parseFloat(document.getElementById(`spend_${productId}`).value) || 0;
+
+    if (spendVal > 0) {
+      const profit = (spendVal * (parseFloat(product.commissionRate) / 100)).toFixed(2);
+
+      // إضافة السجل لجدول الصرف اليومي الخاص بك
+      dailyRecords.push({
+        id: Date.now() + Math.random(),
+        date: new Date().toISOString().split('T')[0],
+        clientName: client.name,
+        productName: product.name,
+        spend: spendVal,
+        profit: parseFloat(profit),
+        platform: 'Meta Ads' // أو المنصة المختارة
+      });
+    }
+  });
+
+  saveDataToLocalStorage(); // دالة الحفظ المحلية الخاصة بمشروعك
+  updateDashboardUI();      // دالة تحديث الأرقام والجدول في الواجهة
+  alert('تم تسجيل الصرف بنجاح!');
+}
         // Init
         addProductInputRow();
         renderDashboard();
